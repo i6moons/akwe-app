@@ -21,7 +21,7 @@ AKWÈ transforme le cahier de tontine en un carnet numérique adapté aux réali
 * **Paiement :** KkiaPay / FedaPay (Sandbox)[cite: 1].
 
 ## 👥 L'équipe (GrokBot Hackathon x Devs Days)
-* **OWOLABI Nafissathou :** Chef d'équipe, Pitch, Validation terrain & UI
+* **OWOLABI Nafissathou :** Chef d'équipe, Pitch & UI
 * **AMINOU Malick :** Lead Technique, Architecture Backend, Supabase & IA LLM
 * **AGBOYINOU Del Prudence :** Dev Front-end, Architecture Offline-first & PWA
 
