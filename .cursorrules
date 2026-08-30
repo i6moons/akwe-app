@@ -1,0 +1,23 @@
+```markdown
+# AKWÈ - Règles du projet[cite: 1]
+
+## Contexte
+Application web PWA de gestion de tontines et coopératives d'épargne au Bénin[cite: 1].
+Utilisatrices : femmes 30-60 ans, faible alphabétisation numérique, connexion 3G intermittente[cite: 1].
+Projet de hackathon 48h : privilégier la simplicité et la fiabilité de la démo[cite: 1].
+
+## Stack
+Next.js 15 App Router, TypeScript strict, Tailwind, shadcn/ui, Supabase, Dexie.js pour l'offline[cite: 1]. 
+Aucune autre dépendance sans ma demande explicite[cite: 1].
+
+## Règles de code
+- TypeScript strict, pas de `any`[cite: 1].
+- Les montants sont des ENTIERS en FCFA. Jamais de float pour l'argent[cite: 1].
+- Formatage : `new Intl.NumberFormat('fr-BJ').format(n) + ' F'`[cite: 1].
+- Toute écriture passe d'abord par IndexedDB, puis la file de sync[cite: 1].
+- Gérer systématiquement les états hors ligne et chargement[cite: 1].
+
+## Interface
+- Mobile first. Zones tactiles de 48px minimum[cite: 1].
+- Palette : vert #0F5132, or #D4A017, fond #FAF9F6[cite: 1].
+- Textes en FRANÇAIS simple[cite: 1].
