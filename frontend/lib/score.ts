@@ -1,68 +1,143 @@
-import {
-  directionOf,
-  type CreditScore,
-  type Group,
-  type Member,
-  type Transaction,
-} from '@/lib/types';
+import type { CreditScore, Frequency, Group, Member, Transaction } from '@/lib/types';
 
 /**
- * Score AKWÈ — la brique qui transforme une épargne informelle en historique
- * présentable à une institution de microfinance.
+ * Score AKWÈ (SPEC) — fonction PURE : données en entrée, résultat en sortie.
  *
- * Quatre composantes, pondérées et bornées à 100 :
- *   régularité 50 · ancienneté 20 · remboursement 20 · volume épargné 10
+ * score = arrondi(
+ *   40 × régularité
+ * + 25 × min(ancienneté_mois / 24, 1)
+ * + 20 × taux_de_remboursement
+ * + 15 × min(total_épargné / (cotisation × 52), 1)
+ * )
  *
- * Tout est calculé en entiers de FCFA. Les ratios restent internes à cette
- * fonction et ne sortent jamais sous forme de montant.
+ * Décision métier : si le membre n'a jamais emprunté, le taux de
+ * remboursement vaut 1. L'absence de dette n'est pas une faute — pénaliser
+ * les caisses sans prêt fausserait le score présenté aux IMF.
  */
 
-const WEIGHTS = { regularity: 50, seniority: 20, repayment: 20, volume: 10 } as const;
-const MAX_SENIORITY_MONTHS = 12;
-const VOLUME_TARGET_FCFA = 100_000;
-const PERIOD_DAYS = { daily: 1, weekly: 7, monthly: 30 } as const;
+const PERIOD_DAYS: Readonly<Record<Frequency, number>> = {
+  daily: 1,
+  weekly: 7,
+  monthly: 30,
+};
 
+export interface ScoreBreakdown {
+  /** Points (entiers) issus de la régularité, max 40. */
+  regularity: number;
+  /** Points issus de l'ancienneté, max 25. */
+  seniority: number;
+  /** Points issus du remboursement, max 20. */
+  repayment: number;
+  /** Points issus du volume épargné, max 15. */
+  volume: number;
+}
+
+export interface ScoreResult extends CreditScore {
+  breakdown: ScoreBreakdown;
+}
+
+export interface ScoreInput {
+  frequency: Frequency;
+  /** Cotisation de la caisse, entier FCFA. */
+  contributionAmount: number;
+  joinedAt: string;
+  transactions: readonly Pick<Transaction, 'type' | 'amount' | 'memberId'>[];
+  now?: Date;
+  memberId?: string;
+}
+
+export function computeScore(input: ScoreInput): ScoreResult;
 export function computeScore(
   member: Member,
   group: Group,
   transactions: readonly Transaction[],
-  now: Date = new Date(),
-): CreditScore {
-  const own = transactions.filter((item) => item.memberId === member.id);
+  now?: Date,
+): ScoreResult;
+export function computeScore(
+  memberOrInput: Member | ScoreInput,
+  group?: Group,
+  transactions?: readonly Transaction[],
+  now?: Date,
+): ScoreResult {
+  const input = isScoreInput(memberOrInput)
+    ? memberOrInput
+    : {
+        frequency: group!.frequency,
+        contributionAmount: group!.contributionAmount,
+        joinedAt: memberOrInput.joinedAt,
+        transactions: transactions ?? [],
+        now,
+        memberId: memberOrInput.id,
+      };
+
+  return scoreFromInput(input);
+}
+
+function isScoreInput(value: Member | ScoreInput): value is ScoreInput {
+  return 'frequency' in value && 'contributionAmount' in value && 'transactions' in value;
+}
+
+function scoreFromInput(input: ScoreInput): ScoreResult {
+  const now = input.now ?? new Date();
+  const memberId = input.memberId ?? '';
+  const own = input.memberId
+    ? input.transactions.filter((item) => item.memberId === input.memberId)
+    : input.transactions;
+
+  const seniorityMonths = monthsBetween(new Date(input.joinedAt), now);
+
+  if (own.length === 0) {
+    return {
+      memberId,
+      score: 0,
+      regularity: 0,
+      seniorityMonths,
+      totalSaved: 0,
+      repaymentRate: 100,
+      breakdown: { regularity: 0, seniority: 0, repayment: 0, volume: 0 },
+    };
+  }
 
   const contributions = own.filter((item) => item.type === 'contribution');
-  const totalSaved = own
-    .filter((item) => directionOf(item.type) === 'in')
-    .reduce((total, item) => total + item.amount, 0);
+  const totalSaved = contributions.reduce((sum, item) => sum + item.amount, 0);
 
-  const seniorityMonths = monthsBetween(new Date(member.joinedAt), now);
-  const expected = expectedContributions(member.joinedAt, group.frequency, now);
-  const regularity = expected === 0 ? 1 : clamp01(contributions.length / expected);
+  const expected = expectedDue(input.joinedAt, input.frequency, now);
+  const regularityRatio = clamp01(expected === 0 ? 0 : contributions.length / expected);
 
-  const loans = own.filter((item) => item.type === 'loan');
-  const repayments = own.filter((item) => item.type === 'repayment');
-  const borrowed = loans.reduce((total, item) => total + item.amount, 0);
-  const repaid = repayments.reduce((total, item) => total + item.amount, 0);
-  const repaymentRate = borrowed === 0 ? 1 : clamp01(repaid / borrowed);
+  const borrowed = own.filter((item) => item.type === 'loan').reduce((sum, item) => sum + item.amount, 0);
+  const repaid = own
+    .filter((item) => item.type === 'repayment')
+    .reduce((sum, item) => sum + item.amount, 0);
+  const repaymentRatio = borrowed === 0 ? 1 : clamp01(repaid / borrowed);
 
-  const score =
-    WEIGHTS.regularity * regularity +
-    WEIGHTS.seniority * clamp01(seniorityMonths / MAX_SENIORITY_MONTHS) +
-    WEIGHTS.repayment * repaymentRate +
-    WEIGHTS.volume * clamp01(totalSaved / VOLUME_TARGET_FCFA);
+  const contribution = Math.max(0, Math.trunc(input.contributionAmount));
+  const volumeTarget = contribution * 52;
+  const volumeRatio = volumeTarget === 0 ? 0 : clamp01(totalSaved / volumeTarget);
+  const seniorityRatio = clamp01(seniorityMonths / 24);
+
+  const breakdown: ScoreBreakdown = {
+    regularity: Math.round(40 * regularityRatio),
+    seniority: Math.round(25 * seniorityRatio),
+    repayment: Math.round(20 * repaymentRatio),
+    volume: Math.round(15 * volumeRatio),
+  };
+
+  const score = clampScore(
+    breakdown.regularity + breakdown.seniority + breakdown.repayment + breakdown.volume,
+  );
 
   return {
-    memberId: member.id,
-    score: Math.max(0, Math.min(100, Math.round(score))),
-    regularity: Math.round(regularity * 100),
+    memberId,
+    score,
+    regularity: Math.round(regularityRatio * 100),
     seniorityMonths,
     totalSaved,
-    repaymentRate: Math.round(repaymentRate * 100),
+    repaymentRate: Math.round(repaymentRatio * 100),
+    breakdown,
   };
 }
 
-/** Nombre de cotisations attendues depuis l'entrée du membre dans la caisse. */
-function expectedContributions(joinedAt: string, frequency: Group['frequency'], now: Date): number {
+function expectedDue(joinedAt: string, frequency: Frequency, now: Date): number {
   const days = Math.floor((now.getTime() - new Date(joinedAt).getTime()) / 86_400_000);
   if (days <= 0) return 0;
   return Math.max(1, Math.floor(days / PERIOD_DAYS[frequency]));
@@ -76,4 +151,9 @@ function monthsBetween(from: Date, to: Date): number {
 function clamp01(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.max(0, Math.min(1, value));
+}
+
+function clampScore(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(100, Math.round(value)));
 }

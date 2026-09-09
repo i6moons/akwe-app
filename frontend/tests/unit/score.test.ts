@@ -50,7 +50,14 @@ describe('computeScore', () => {
     expect(score.regularity).toBe(100);
     expect(score.seniorityMonths).toBe(6);
     expect(score.totalSaved).toBe(52_000);
-    expect(score.score).toBeGreaterThanOrEqual(80);
+    // 40×1 + 25×(6/24) + 20×1 + 15×(52000/104000) = 73,75 → 74
+    expect(score.score).toBe(74);
+    expect(score.breakdown).toEqual({
+      regularity: 40,
+      seniority: 6,
+      repayment: 20,
+      volume: 8,
+    });
   });
 
   it('pénalise les absences de cotisation', () => {
