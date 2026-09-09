@@ -52,7 +52,7 @@ export default function CaissesPage() {
         </div>
       </div>
 
-      <div className="flex-1 space-y-3 px-4 pt-6">
+      <div className="flex-1 space-y-3 px-4 pt-6 lg:flex-none">
         {filtered === undefined ? (
           <SkeletonList rows={3} />
         ) : filtered.length === 0 ? (

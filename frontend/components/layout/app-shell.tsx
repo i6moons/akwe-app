@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { SideNav } from '@/components/layout/side-nav';
-import { ROUTES_SANS_COQUILLE } from '@/lib/nav';
+import { ROUTES_PLEINE_LARGEUR, ROUTES_SANS_COQUILLE } from '@/lib/nav';
 
 /**
  * Coquille de l'application.
@@ -18,8 +18,13 @@ import { ROUTES_SANS_COQUILLE } from '@/lib/nav';
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
-  // Ouverture et authentification occupent tout l'écran, sans navigation.
-  if (ROUTES_SANS_COQUILLE.includes(pathname)) return <>{children}</>;
+  // Ouverture et authentification n'ont pas de navigation, mais gardent une
+  // largeur de lecture : six cases de code réparties sur toute la fenêtre ne se
+  // lisent plus comme un code, et un champ de téléphone d'un mètre non plus.
+  if (ROUTES_SANS_COQUILLE.includes(pathname)) {
+    if (ROUTES_PLEINE_LARGEUR.includes(pathname)) return <>{children}</>;
+    return <div className="mx-auto w-full lg:max-w-md">{children}</div>;
+  }
 
   return (
     <div className="lg:flex lg:items-start">

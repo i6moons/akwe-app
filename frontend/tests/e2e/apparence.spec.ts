@@ -40,26 +40,50 @@ test.describe('Apparence', () => {
     }
   });
 
-  test("le bouton d'action principal est atteignable sans faire défiler", async ({ page }) => {
-    await page.goto('/caisses/nouvelle');
+  const ACTIONS = [
+    { chemin: '/caisses/nouvelle', nom: 'Créer la caisse', role: 'button' as const },
+    { chemin: '/caisses', nom: 'Nouvelle caisse', role: 'link' as const },
+  ];
 
-    const bouton = page.getByRole('button', { name: 'Créer la caisse' });
-    await expect(bouton).toBeInViewport();
+  for (const { chemin, nom, role } of ACTIONS) {
+    test(`l'action « ${nom} » est bien placée`, async ({ page }) => {
+      await page.goto(chemin);
 
-    const boite = await bouton.boundingBox();
-    expect(boite).not.toBeNull();
+      // Cadré sur le contenu : la navigation permanente porte les mêmes noms.
+      const bouton = page.locator('main').getByRole(role, { name: nom });
+      await expect(bouton).toBeInViewport();
 
-    if (estBureau(page)) {
+      const boite = await bouton.boundingBox();
+      expect(boite).not.toBeNull();
+      const { width: largeur, height: hauteur } = page.viewportSize()!;
+
+      if (!estBureau(page)) {
+        // Sous le pouce, il occupe le dernier quart de l'écran.
+        expect(boite!.y).toBeGreaterThan(hauteur * 0.75);
+        return;
+      }
+
       // À la souris, tout l'écran est atteignable : le bouton reprend sa place
-      // sous le formulaire plutôt que de flotter, détaché, en bas de fenêtre.
-      const largeur = page.viewportSize()!.width;
+      // dans le flux plutôt que de flotter, détaché, en bas de fenêtre.
       expect(boite!.width).toBeLessThan(largeur / 2);
-    } else {
-      // Sous le pouce, il occupe le dernier quart de l'écran.
-      const hauteur = page.viewportSize()!.height;
-      expect(boite!.y).toBeGreaterThan(hauteur * 0.75);
-    }
-  });
+
+      // Et il suit le contenu de près. Un voisin en `flex-1` qui se dilate sur
+      // toute la hauteur le rejetait tout en bas, séparé de ce qu'il valide.
+      // On ignore ses propres ancêtres, dont la base passe forcément sous lui.
+      const basDuContenu = await bouton.evaluate((element) => {
+        const main = element.closest('main');
+        if (!main) return 0;
+        let bas = 0;
+        for (const noeud of main.querySelectorAll('*')) {
+          if (noeud.contains(element)) continue;
+          const boite = noeud.getBoundingClientRect();
+          if (boite.height > 40) bas = Math.max(bas, boite.bottom);
+        }
+        return bas;
+      });
+      expect(boite!.y - basDuContenu, `« ${nom} » décroché du contenu`).toBeLessThan(60);
+    });
+  }
 
   test('la navigation est permanente sur grand écran, en tiroir sur téléphone', async ({
     page,

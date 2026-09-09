@@ -97,6 +97,16 @@ Deux pièges rencontrés, à ne pas réintroduire :
 - Une liste en deux colonnes n'est pas toujours un gain : à 1024 px, une ligne de
   caisse cassait son nom et son solde sur trois lignes. Elle ne passe en grille
   qu'à `xl`.
+- Un voisin en `flex-1` remplit la hauteur de l'écran. Tant que la barre d'action
+  était en position fixe, cela ne se voyait pas ; une fois revenue dans le flux,
+  elle se retrouvait rejetée tout en bas, détachée de ce qu'elle valide. Ces
+  conteneurs portent donc `lg:flex-none`.
+
+Les écrans d'ouverture et d'authentification n'ont pas de navigation, mais
+gardent une largeur de lecture : six cases de code réparties sur toute la fenêtre
+ne se lisent plus comme un code. L'écran d'ouverture fait exception dans
+`lib/nav.ts` — il peint ses diagonales d'un bord à l'autre et resserre lui-même
+sa colonne centrale, sinon son fond serait découpé en bande.
 
 ## Animations
 

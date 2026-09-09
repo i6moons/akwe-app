@@ -25,7 +25,7 @@ export default function SplashPage() {
         style={{ clipPath: 'polygon(0 100%, 0 0, 100% 100%)' }}
       />
 
-      <div className="relative z-10 flex flex-col items-center gap-8 px-6 text-center">
+      <div className="relative z-10 flex w-full max-w-sm flex-col items-center gap-8 px-6 text-center">
         <div>
           <m.h1
             variants={trackingIn}

@@ -65,7 +65,7 @@ function MembresListe({ id }: { id: string }) {
 
       <p className="px-4 pt-5 text-sm font-medium text-white">{countLabel}</p>
 
-      <div className="flex-1 px-4 pt-2">
+      <div className="flex-1 px-4 pt-2 lg:flex-none">
         {filtered === undefined ? (
           <SkeletonList rows={4} />
         ) : filtered.length === 0 ? (

@@ -24,3 +24,10 @@ export const ROUTES_SANS_COQUILLE: readonly string[] = [
   routes.verification,
   '/offline',
 ];
+
+/**
+ * Parmi celles-ci, celles qui peignent leur propre fond d'un bord à l'autre.
+ * La coquille ne leur impose pas de colonne : elles la posent elles-mêmes, sans
+ * quoi le fond serait découpé en bande au milieu de l'écran.
+ */
+export const ROUTES_PLEINE_LARGEUR: readonly string[] = [routes.splash];
