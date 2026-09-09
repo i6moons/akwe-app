@@ -56,7 +56,7 @@ export function ConfirmStep({
     <main className="safe-bottom min-h-dvh pb-8">
       <AppHeader title="Confirmation de donnée" centered />
 
-      <div className="px-4 pt-6">
+      <div className="px-4 pt-6 lg:mx-auto lg:w-full lg:max-w-2xl">
         <Card className="space-y-5">
           <div className="flex items-center gap-3">
             <Avatar name={draft.memberName ?? '?'} size="lg" />

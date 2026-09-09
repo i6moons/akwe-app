@@ -22,8 +22,8 @@ export function BalanceCard({ total, monthDelta }: { total?: number; monthDelta?
           montant. `priority` car c'est la première image vue à l'ouverture. */}
       <m.div
         aria-hidden
-        initial={{ opacity: 0, scale: 1.05 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial={{ scale: 1.05 }}
+        animate={{ scale: 1 }}
         transition={{ duration: 0.8, ease: 'easeOut' }}
         className="pointer-events-none absolute right-2 bottom-2 w-20"
       >

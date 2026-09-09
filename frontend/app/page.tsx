@@ -25,7 +25,7 @@ export default function SplashPage() {
         style={{ clipPath: 'polygon(0 100%, 0 0, 100% 100%)' }}
       />
 
-      <div className="relative z-10 flex flex-col items-center gap-8 px-6 text-center">
+      <div className="relative z-10 flex w-full max-w-sm flex-col items-center gap-8 px-6 text-center">
         <div>
           <m.h1
             variants={trackingIn}
@@ -36,8 +36,8 @@ export default function SplashPage() {
             AKWÈ
           </m.h1>
           <m.p
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ y: 8 }}
+            animate={{ y: 0 }}
             transition={{ duration: 0.4, delay: 0.35, ease: 'easeOut' }}
             className="font-display text-brand-800 pt-2 text-sm"
           >
@@ -46,8 +46,8 @@ export default function SplashPage() {
         </div>
 
         <m.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ y: 12 }}
+          animate={{ y: 0 }}
           transition={{ duration: 0.4, delay: 0.5, ease: 'easeOut' }}
           className="w-full"
         >

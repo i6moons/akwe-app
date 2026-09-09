@@ -39,7 +39,9 @@ test.describe('Retours à l’utilisatrice', () => {
     await page.goto('/caisses');
     await page.getByRole('link', { name: /Tontine Ayaba/ }).click();
     await page.getByRole('link', { name: /Membres/ }).click();
-    await page.getByRole('link').filter({ hasText: /\w/ }).nth(1).click();
+    // Un membre nommé plutôt qu'un rang dans la page : la navigation
+    // permanente des grands écrans ajoute des liens avant celui-ci.
+    await page.getByRole('link', { name: /Adjovi Sébastien/ }).click();
     await page.getByRole('link', { name: 'Modifier le membre' }).click();
 
     await page.getByRole('button', { name: 'Inactif' }).click();

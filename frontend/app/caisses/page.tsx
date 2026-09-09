@@ -52,7 +52,7 @@ export default function CaissesPage() {
         </div>
       </div>
 
-      <div className="flex-1 space-y-3 px-4 pt-6">
+      <div className="flex-1 space-y-3 px-4 pt-6 lg:flex-none">
         {filtered === undefined ? (
           <SkeletonList rows={3} />
         ) : filtered.length === 0 ? (
@@ -81,7 +81,7 @@ export default function CaissesPage() {
             }
           />
         ) : (
-          <StaggerList className="space-y-3">
+          <StaggerList className="space-y-3 xl:grid xl:grid-cols-2 xl:gap-3 xl:space-y-0">
             {filtered.map((row) => (
               <StaggerItem key={row.group.id}>
                 <GroupRow {...row} />
