@@ -1,10 +1,14 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import type { ComponentProps } from 'react';
 import { cn } from '@/lib/utils';
+import { Spinner } from '@/components/ui/states';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-colors ' +
-    'disabled:pointer-events-none disabled:opacity-50 active:scale-[0.99]',
+  'inline-flex items-center justify-center gap-2 rounded-xl font-semibold ' +
+    'transition-all duration-200 ease-out active:scale-[0.98] ' +
+    'focus-visible:ring-accent-500 focus-visible:ring-2 focus-visible:ring-offset-2 ' +
+    'focus-visible:ring-offset-brand-800 focus-visible:outline-none ' +
+    'disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
@@ -13,7 +17,7 @@ const buttonVariants = cva(
         outline: 'border-2 border-brand-800 bg-transparent text-brand-800 hover:bg-brand-100/40',
         outlineLight: 'border-2 border-white/30 bg-transparent text-white hover:bg-white/10',
         ghost: 'bg-transparent text-brand-800 hover:bg-brand-100/40',
-        danger: 'bg-danger-500 text-white hover:bg-danger-500/90',
+        danger: 'bg-danger-600 text-white hover:bg-danger-600/90',
       },
       size: {
         // 48px minimum : zone tactile imposée par le .cursorrules.
@@ -26,11 +30,33 @@ const buttonVariants = cva(
   },
 );
 
-export type ButtonProps = ComponentProps<'button'> & VariantProps<typeof buttonVariants>;
+export type ButtonProps = ComponentProps<'button'> &
+  VariantProps<typeof buttonVariants> & {
+    /** Affiche un rouet et bloque le bouton, sans changer sa largeur. */
+    loading?: boolean;
+  };
 
-export function Button({ className, variant, size, type = 'button', ...props }: ButtonProps) {
+export function Button({
+  className,
+  variant,
+  size,
+  type = 'button',
+  loading = false,
+  disabled,
+  children,
+  ...props
+}: ButtonProps) {
   return (
-    <button type={type} className={cn(buttonVariants({ variant, size }), className)} {...props} />
+    <button
+      type={type}
+      disabled={disabled ?? loading}
+      aria-busy={loading || undefined}
+      className={cn(buttonVariants({ variant, size }), className)}
+      {...props}
+    >
+      {loading ? <Spinner className="size-5" /> : null}
+      {children}
+    </button>
   );
 }
 

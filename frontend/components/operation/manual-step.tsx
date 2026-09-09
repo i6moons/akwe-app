@@ -1,14 +1,17 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { CalendarDays, Save, User } from 'lucide-react';
+import { Banknote, CalendarDays, Save, User } from 'lucide-react';
 import { AppHeader } from '@/components/layout/app-header';
 import { TypePicker } from '@/components/operation/type-picker';
 import { OfflineNotice } from '@/components/layout/offline-notice';
 import { Button } from '@/components/ui/button';
+import { FixedAction } from '@/components/ui/fixed-action';
 import { Card } from '@/components/ui/card';
-import { BareInput, Field, IconField, Select } from '@/components/ui/field';
+import { Field } from '@/components/ui/field';
+import { BareInput, IconField, Select } from '@/components/ui/input';
 import { SkeletonList } from '@/components/ui/states';
+import { useFormErrors } from '@/lib/hooks/use-form-errors';
 import { useMembers } from '@/lib/hooks/use-akwe';
 import { parseAmount, toDateInput } from '@/lib/format';
 import type { OperationDraft, TransactionType } from '@/lib/types';
@@ -31,17 +34,17 @@ export function ManualStep({
   const [date, setDate] = useState(
     toDateInput(initial ? new Date(initial.occurredAt) : new Date()),
   );
-  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const form = useFormErrors({
+    member: () => (memberId ? null : 'Choisissez le membre concerné.'),
+    amount: () =>
+      parseAmount(amount) === null ? 'Entrez un montant en FCFA, par exemple 2000.' : null,
+  });
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
     const parsed = parseAmount(amount);
-    const nextErrors: Record<string, string> = {};
-    if (!memberId) nextErrors.member = 'Choisissez le membre concerné.';
-    if (parsed === null) nextErrors.amount = 'Entrez un montant en FCFA, par exemple 2000.';
-
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0 || parsed === null) return;
+    if (!form.valider() || parsed === null) return;
 
     const member = members?.find((item) => item.id === memberId) ?? null;
     onReady({
@@ -63,7 +66,7 @@ export function ManualStep({
 
       <form onSubmit={handleSubmit} className="flex flex-1 flex-col px-4">
         <Card className="space-y-5">
-          <Field label="Membre" htmlFor="membre" required error={errors.member}>
+          <Field label="Membre" htmlFor="membre" required error={form.error('member')}>
             {members === undefined ? (
               <SkeletonList rows={1} />
             ) : (
@@ -71,7 +74,11 @@ export function ManualStep({
                 <Select
                   id="membre"
                   value={memberId}
-                  onChange={(event) => setMemberId(event.target.value)}
+                  onChange={(event) => {
+                    setMemberId(event.target.value);
+                    form.effacer('member');
+                  }}
+                  onBlur={form.blur('member')}
                   className="rounded-none border-0"
                 >
                   <option value="">Sélectionner un membre</option>
@@ -88,19 +95,23 @@ export function ManualStep({
           </Field>
 
           <div className="space-y-2">
-            <p className="font-display text-brand-800 font-semibold">
-              Type d&apos;opération<span className="text-danger-500"> *</span>
+            <p className="text-brand-800 font-semibold">
+              Type d&apos;opération<span className="text-danger-600"> *</span>
             </p>
             <TypePicker value={type} onChange={setType} />
           </div>
 
-          <Field label="Montant" htmlFor="montant" required error={errors.amount}>
-            <IconField suffix="FCFA">
+          <Field label="Montant" htmlFor="montant" required error={form.error('amount')}>
+            <IconField icon={<Banknote className="size-5" aria-hidden />} suffix="FCFA">
               <BareInput
                 id="montant"
                 inputMode="numeric"
                 value={amount}
-                onChange={(event) => setAmount(event.target.value)}
+                onChange={(event) => {
+                  setAmount(event.target.value);
+                  form.effacer('amount');
+                }}
+                onBlur={form.blur('amount')}
                 placeholder="Ex : 2000"
               />
             </IconField>
@@ -121,12 +132,12 @@ export function ManualStep({
           <OfflineNotice />
         </Card>
 
-        <div className="mt-auto pt-8">
+        <FixedAction>
           <Button type="submit" size="lg">
             <Save className="size-5" aria-hidden />
             Enregistrer
           </Button>
-        </div>
+        </FixedAction>
       </form>
     </main>
   );

@@ -42,7 +42,7 @@ export function ScoreCard({ score, onExport }: { score: CreditScore; onExport?: 
             x="64"
             y="60"
             textAnchor="middle"
-            className="fill-brand-800 font-display"
+            className="fill-brand-800 font-bold"
             fontSize="30"
             fontWeight="700"
           >
@@ -75,7 +75,7 @@ export function ScoreCard({ score, onExport }: { score: CreditScore; onExport?: 
 function Line({ label, value }: { label: string; value: string }) {
   return (
     <div className="border-line flex justify-between border-b py-2 last:border-0">
-      <dt className="text-brand-700/70">{label}</dt>
+      <dt className="text-brand-700/80">{label}</dt>
       <dd className="text-brand-800 font-semibold">{value}</dd>
     </div>
   );

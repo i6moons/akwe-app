@@ -23,13 +23,20 @@
   --color-line: #c4d2d1;
   --color-muted: #99b3b2;
 
-  --color-danger-500: #ff6b6b;
+  --color-danger-500: #ff6b6b; /* accents décoratifs, repris des maquettes */
+  /* Le rouge des maquettes tombe à 2,5:1 sur une carte claire. Cette version
+     foncée passe à 5,2:1 : elle porte le texte d'erreur et les boutons destructifs. */
+  --color-danger-600: #c62828;
   --color-danger-100: #f6d0d0;
+  --color-danger-50: #fdecec; /* fond des pastilles « sortie » et « en attente » */
   --color-warn-100: #fbf3d6;
   --color-warn-500: #d4a017;
 
-  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-playfair), ui-serif, Georgia, serif;
+  /* Deux polices, pas une de plus. `font-sans` est conservé et pointe sur Inter
+     pour ne casser aucun appel existant. */
+  --font-display: var(--font-display-family), ui-serif, Georgia, serif;
+  --font-body: var(--font-body-family), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-body-family), ui-sans-serif, system-ui, sans-serif;
 
   --radius-card: 1rem;
   --radius-field: 0.625rem;
@@ -48,15 +55,25 @@
   }
 
   body {
-    @apply bg-brand-800 font-sans text-white antialiased;
+    @apply bg-brand-800 font-body text-white antialiased;
+    /* Inter en 500 par défaut : le corps de texte reste lisible sur un écran
+       bon marché, sans paraître gras. */
+    font-weight: 500;
     /* Évite le rebond élastique iOS qui donne l'impression d'un bug pendant la démo. */
     overscroll-behavior-y: none;
   }
 
   h1,
   h2,
+  h3,
   .font-display {
     @apply font-display;
+    /* Inknut Antiqua n'existe qu'en 700 ici : inutile de demander autre chose. */
+    font-weight: 700;
+    /* Une antiqua large a besoin d'air vertical mais de moins d'espace entre
+       les lettres qu'une sans-serif. */
+    line-height: 1.25;
+    letter-spacing: -0.01em;
   }
 
   /* Champs de saisie : 48px minimum, gros texte, fort contraste. */
@@ -67,8 +84,32 @@
     font: inherit;
   }
 
+  /* Anneau de focus visible partout au clavier. Vert accent plutôt que bleu
+     système : c'est la couleur d'action de l'application. */
   :focus-visible {
     @apply outline-accent-500 outline-2 outline-offset-2;
+  }
+
+  /* Retour tactile commun à tout ce qui se touche. Le geste doit répondre
+     immédiatement, même quand la 3G ne répond pas. */
+  a,
+  button,
+  [role='button'],
+  summary {
+    @apply transition-all duration-200 ease-out;
+  }
+
+  a:active,
+  button:not(:disabled):active,
+  [role='button']:active {
+    @apply scale-[0.98];
+  }
+
+  @media (hover: hover) {
+    a:hover,
+    button:not(:disabled):hover {
+      @apply opacity-90;
+    }
   }
 }
 
@@ -76,6 +117,22 @@
   /* Empêche le zoom automatique iOS sur les champs (<16px). */
   .text-field {
     font-size: max(1rem, 16px);
+  }
+
+  /* Champ date : on affiche déjà une icône de calendrier à gauche. On étale le
+     déclencheur natif, invisible, sur tout le champ — appuyer n'importe où
+     ouvre le sélecteur, au lieu de viser une cible de 20 px. */
+  input[type='date']::-webkit-calendar-picker-indicator {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    height: auto;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  input[type='date'] {
+    position: relative;
   }
 
   .safe-bottom {
@@ -88,6 +145,14 @@
 
   .no-scrollbar {
     scrollbar-width: none;
+  }
+
+  /* Halo vert derrière l'en-tête d'accueil : donne de la profondeur sans
+     charger la moindre image. */
+  .hero-glow {
+    background-image:
+      radial-gradient(120% 70% at 85% 0%, rgb(5 220 127 / 0.16), transparent 60%),
+      radial-gradient(90% 60% at 0% 10%, rgb(2 124 119 / 0.35), transparent 65%);
   }
 }
 

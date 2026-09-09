@@ -9,6 +9,7 @@ import { ScoreCard } from '@/components/membre/score-card';
 import { OperationRow } from '@/components/operation/operation-row';
 import { Card, CardTitle, InfoRow } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
+import { FixedAction } from '@/components/ui/fixed-action';
 import { ErrorState, Skeleton } from '@/components/ui/states';
 import { useGroup, useMember, useTransactions } from '@/lib/hooks/use-akwe';
 import { totalContributedBy } from '@/lib/db/repository';
@@ -109,7 +110,7 @@ function FicheMembre({ id, memberId }: { id: string; memberId: string }) {
         <Card className="space-y-3">
           <CardTitle className="text-base">Dernières opérations</CardTitle>
           {own.length === 0 ? (
-            <p className="text-brand-700/70 text-sm">Aucune opération pour ce membre.</p>
+            <p className="text-brand-700/80 text-sm">Aucune opération pour ce membre.</p>
           ) : (
             <ul className="space-y-2">
               {own.map((transaction) => (
@@ -122,12 +123,14 @@ function FicheMembre({ id, memberId }: { id: string; memberId: string }) {
         </Card>
 
         {score ? <ScoreCard score={score} /> : <Skeleton className="h-80 w-full" />}
+      </div>
 
+      <FixedAction>
         <Link href={routes.modifierMembre(id, memberId)} className={buttonVariants({ size: 'lg' })}>
           <Pencil className="size-5" aria-hidden />
           Modifier le membre
         </Link>
-      </div>
+      </FixedAction>
     </main>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { Minus, Plus } from 'lucide-react';
+import { m } from '@/components/ui/motion';
 import { OPERATION_TYPES, type TransactionType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -28,7 +29,7 @@ export function TypePicker({
           <p
             className={cn(
               'pb-2 text-sm font-medium',
-              group.direction === 'in' ? 'text-accent-600' : 'text-brand-700/70',
+              group.direction === 'in' ? 'text-accent-600' : 'text-brand-700/80',
             )}
           >
             {group.label}
@@ -37,11 +38,14 @@ export function TypePicker({
             {OPERATION_TYPES.filter((meta) => meta.direction === group.direction).map((meta) => {
               const selected = value === meta.type;
               return (
-                <button
+                <m.button
                   key={meta.type}
                   type="button"
                   aria-pressed={selected}
                   onClick={() => onChange(meta.type)}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
                   className={cn(
                     'min-h-touch flex items-center gap-1 rounded-full px-4 font-medium',
                     selected
@@ -55,7 +59,7 @@ export function TypePicker({
                     <Minus className="size-4" aria-hidden />
                   )}
                   {meta.label}
-                </button>
+                </m.button>
               );
             })}
           </div>

@@ -18,7 +18,7 @@ export function LastActivity() {
 
   if (latest === null) {
     return (
-      <CardPanel className="text-brand-700/70 text-sm">
+      <CardPanel className="text-brand-700/80 text-sm">
         Aucune opération pour le moment. Enregistrez la première cotisation de votre caisse.
       </CardPanel>
     );
@@ -36,18 +36,16 @@ export function LastActivity() {
         <Users className="size-6" aria-hidden />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="font-display text-brand-800 block truncate font-bold">
-          {row.group.name}
-        </span>
-        <span className="text-brand-700/70 block truncate text-xs">
+        <span className="text-brand-800 block truncate font-bold">{row.group.name}</span>
+        <span className="text-brand-700/80 block truncate text-xs">
           {groupSubtitle(row.group, row.memberCount)}
         </span>
-        <span className="font-display text-brand-800 block pt-1 text-sm font-bold">
+        <span className="text-brand-800 block pt-1 text-sm font-bold">
           {formatMoneyLong(row.balance)}
         </span>
       </span>
       <span className="shrink-0 text-right">
-        <span className="text-brand-700/70 block text-xs">{formatRelative(latest.occurredAt)}</span>
+        <span className="text-brand-700/80 block text-xs">{formatRelative(latest.occurredAt)}</span>
         <ChevronRight className="text-brand-600 ml-auto size-5" aria-hidden />
       </span>
     </Link>

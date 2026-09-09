@@ -2,6 +2,8 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import { seedDemoData } from '@/lib/db/seed';
+import { MotionProvider } from '@/components/ui/motion';
+import { ToastProvider } from '@/components/ui/toast';
 
 /**
  * Amorce l'application côté navigateur.
@@ -34,8 +36,12 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <div data-app-ready={ready} className="min-h-dvh">
-      {children}
-    </div>
+    <MotionProvider>
+      <ToastProvider>
+        <div data-app-ready={ready} className="min-h-dvh">
+          {children}
+        </div>
+      </ToastProvider>
+    </MotionProvider>
   );
 }

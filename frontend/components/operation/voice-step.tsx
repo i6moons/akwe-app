@@ -54,10 +54,10 @@ export function VoiceStep({
           />
 
           <div className="text-center">
-            <p className="font-display text-brand-800 font-bold">
+            <p className="text-brand-800 font-bold">
               {listening ? 'Je vous écoute…' : 'Appuyez pour enregistrer'}
             </p>
-            <p className="text-brand-700/60 text-xs">
+            <p className="text-brand-700/80 text-xs">
               Exemple : Adjovi a donné 10.000 francs pour la cotisation
             </p>
           </div>
@@ -94,13 +94,13 @@ export function VoiceStep({
                   <Mic className="size-5" aria-hidden />
                 </span>
                 <span className="text-sm">
-                  <span className="text-brand-700/70 block">Transcription détectée</span>
+                  <span className="text-brand-700/80 block">Transcription détectée</span>
                   <span className="text-brand-800 block">« {draft.rawTranscript} »</span>
                 </span>
               </CardPanel>
 
               <div>
-                <p className="font-display text-brand-800 pb-1 font-bold">Informations extraites</p>
+                <p className="text-brand-800 pb-1 font-bold">Informations extraites</p>
                 <DraftSummary draft={draft} />
               </div>
 

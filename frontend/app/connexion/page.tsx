@@ -4,6 +4,10 @@ import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Wordmark } from '@/components/brand/wordmark';
 import { Button } from '@/components/ui/button';
+import { FixedAction } from '@/components/ui/fixed-action';
+import { FieldError } from '@/components/ui/field';
+import { m } from '@/components/ui/motion';
+import { cn } from '@/lib/utils';
 import { formatPhone } from '@/lib/format';
 import { setPendingPhone } from '@/lib/auth/session';
 import { routes } from '@/lib/routes';
@@ -16,6 +20,7 @@ export default function ConnexionPage() {
   const router = useRouter();
   const [phone, setPhone] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [secousse, setSecousse] = useState(0);
 
   const digits = phone.replace(/\D/g, '');
   const isValid = digits.length === PHONE_LENGTH;
@@ -24,6 +29,8 @@ export default function ConnexionPage() {
     event.preventDefault();
     if (!isValid) {
       setError('Entrez les 10 chiffres de votre numéro.');
+      // Change de clé pour rejouer la secousse même si l'erreur est identique.
+      setSecousse((tour) => tour + 1);
       return;
     }
     setPendingPhone(digits);
@@ -40,7 +47,15 @@ export default function ConnexionPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-1 flex-col pt-12">
-        <div className="border-brand-500 focus-within:border-accent-500 flex items-stretch rounded-xl border-2">
+        <m.div
+          key={secousse}
+          animate={secousse > 0 ? { x: [0, -10, 10, -10, 10, 0] } : undefined}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          className={cn(
+            'flex items-stretch rounded-xl border-2 transition-colors duration-200',
+            error ? 'border-danger-500' : 'border-brand-500 focus-within:border-accent-500',
+          )}
+        >
           <span className="border-brand-500 flex items-center gap-2 border-r px-4 text-white">
             <span aria-hidden className="text-lg">
               🇧🇯
@@ -58,21 +73,24 @@ export default function ConnexionPage() {
               setPhone(formatPhone(event.target.value));
               setError(null);
             }}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'erreur-telephone' : undefined}
+            onBlur={() => {
+              if (phone && !isValid) setError('Entrez les 10 chiffres de votre numéro.');
+            }}
             className="text-field min-h-14 flex-1 bg-transparent px-4 text-white outline-none placeholder:text-white/50"
           />
+        </m.div>
+
+        <div className="pt-3">
+          <FieldError id="erreur-telephone" message={error} />
         </div>
 
-        {error ? (
-          <p role="alert" className="text-danger-500 pt-3 text-sm font-medium">
-            {error}
-          </p>
-        ) : null}
-
-        <div className="safe-bottom mt-auto pt-10">
+        <FixedAction>
           <Button type="submit" size="lg" disabled={!isValid}>
             Envoyez le code OTP
           </Button>
-        </div>
+        </FixedAction>
       </form>
     </main>
   );

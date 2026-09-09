@@ -40,7 +40,7 @@ export function GroupBalanceCard({
           {balance === undefined ? (
             <Skeleton className="mt-2 h-9 w-40 bg-white/20" />
           ) : (
-            <p className="font-display text-accent-500 text-3xl font-bold">
+            <p className="text-accent-500 text-3xl font-bold tracking-tight">
               {visible ? formatMoneyLong(balance) : '•••••• FCFA'}
             </p>
           )}
@@ -92,7 +92,7 @@ function Fact({
         <span aria-hidden>{icon}</span>
         {label}
       </dt>
-      <dd className="font-display truncate text-xs font-semibold">{children}</dd>
+      <dd className="truncate text-xs font-semibold">{children}</dd>
     </div>
   );
 }

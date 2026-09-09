@@ -7,6 +7,7 @@ import { HistoryFilters, type HistoryFilter } from '@/components/operation/histo
 import { OperationRow } from '@/components/operation/operation-row';
 import { HistorySummary } from '@/components/operation/history-summary';
 import { Card } from '@/components/ui/card';
+import { Reveal } from '@/components/ui/motion';
 import { EmptyState, SkeletonList } from '@/components/ui/states';
 import { useGroup, useMembers, useTransactions } from '@/lib/hooks/use-akwe';
 import { groupByDay } from '@/lib/operations/group-by-day';
@@ -77,7 +78,7 @@ function Historique({ id }: { id: string }) {
             Rechercher une opération
           </label>
           <div className="border-line flex items-center gap-3 rounded-full border px-4">
-            <Search className="text-brand-700/60 size-5 shrink-0" aria-hidden />
+            <Search className="text-brand-700/80 size-5 shrink-0" aria-hidden />
             <input
               id="recherche-operation"
               type="search"
@@ -99,24 +100,26 @@ function Historique({ id }: { id: string }) {
           />
         ) : (
           buckets.map((bucket) => (
-            <section key={bucket.key} className="space-y-2">
-              <header className="flex items-center justify-between px-1">
-                <h2 className="font-display font-bold text-white">{bucket.label}</h2>
-                <span className="text-xs text-white/60">{bucket.fullDate}</span>
-              </header>
-              <ul className="space-y-2">
-                {bucket.transactions.map((transaction) => (
-                  <li key={transaction.id}>
-                    <OperationRow
-                      transaction={transaction}
-                      memberName={
-                        transaction.memberId ? names.get(transaction.memberId) : undefined
-                      }
-                    />
-                  </li>
-                ))}
-              </ul>
-            </section>
+            <Reveal key={bucket.key}>
+              <section className="space-y-2">
+                <header className="flex items-center justify-between px-1">
+                  <h2 className="font-display font-bold text-white">{bucket.label}</h2>
+                  <span className="text-xs text-white/60">{bucket.fullDate}</span>
+                </header>
+                <ul className="space-y-2">
+                  {bucket.transactions.map((transaction) => (
+                    <li key={transaction.id}>
+                      <OperationRow
+                        transaction={transaction}
+                        memberName={
+                          transaction.memberId ? names.get(transaction.memberId) : undefined
+                        }
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </Reveal>
           ))
         )}
 

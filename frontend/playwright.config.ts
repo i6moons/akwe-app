@@ -5,6 +5,9 @@ const baseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${PORT}`;
 
 export default defineConfig({
   testDir: './tests/e2e',
+  // Les fichiers `*.capture.spec.ts` ne vérifient rien : ils produisent les
+  // images de revue de design. On les lance à la main, pas en intégration.
+  testIgnore: '**/*.capture.spec.ts',
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,

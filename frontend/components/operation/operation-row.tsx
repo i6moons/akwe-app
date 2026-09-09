@@ -28,7 +28,7 @@ export function OperationRow({
       <span
         className={cn(
           'flex size-11 shrink-0 items-center justify-center rounded-full',
-          isIn ? 'bg-accent-100 text-accent-600' : 'bg-danger-100 text-danger-500',
+          isIn ? 'bg-accent-100 text-accent-600' : 'bg-danger-50 text-danger-600',
         )}
         aria-hidden
       >
@@ -36,17 +36,15 @@ export function OperationRow({
       </span>
 
       <div className="min-w-0 flex-1">
-        <p className="font-display text-brand-800 font-bold">
-          {operationMeta(transaction.type).label}
-        </p>
+        <p className="text-brand-800 font-bold">{operationMeta(transaction.type).label}</p>
         {memberName ? <p className="text-brand-700/80 truncate text-sm">{memberName}</p> : null}
-        <p className="text-brand-700/60 text-xs">
+        <p className="text-brand-700/80 text-xs">
           {formatTime(transaction.occurredAt)} · {SOURCE_LABELS[transaction.source]}
         </p>
       </div>
 
       <div className="shrink-0 text-right">
-        <p className={cn('font-display font-bold', isIn ? 'text-accent-600' : 'text-danger-500')}>
+        <p className={cn('font-bold', isIn ? 'text-accent-600' : 'text-danger-600')}>
           {formatSigned(transaction.amount, direction)}
         </p>
         <div className="flex justify-end pt-1">

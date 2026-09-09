@@ -44,7 +44,10 @@ async function buildAssets() {
     .map((file) => `/_next/${file}`);
 }
 
-const precache = [...(await staticPaths()), '/manifest.webmanifest', ...(await buildAssets())];
+/** Fichiers de `public/` dont l'application a besoin hors connexion. */
+const PUBLIC_ASSETS = ['/manifest.webmanifest', '/image1.png'];
+
+const precache = [...(await staticPaths()), ...PUBLIC_ASSETS, ...(await buildAssets())];
 
 // Le nom du cache change dès qu'un fichier change : l'ancien cache est alors
 // supprimé à l'activation, et personne ne reste bloqué sur une vieille version.

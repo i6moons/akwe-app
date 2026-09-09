@@ -1,19 +1,7 @@
 import type { Metadata, Viewport } from 'next';
-import { Playfair_Display, Plus_Jakarta_Sans } from 'next/font/google';
 import { AppProviders } from '@/components/providers';
+import { fontVariables } from '@/lib/fonts';
 import './globals.css';
-
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  variable: '--font-jakarta',
-  display: 'swap',
-});
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  variable: '--font-playfair',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   title: 'AKWÈ — Le carnet des tontines',
@@ -36,7 +24,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${jakarta.variable} ${playfair.variable}`}>
+    <html lang="fr" className={fontVariables}>
       <body>
         <AppProviders>{children}</AppProviders>
       </body>

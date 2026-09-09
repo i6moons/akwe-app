@@ -57,7 +57,7 @@ export function SuccessStep({
               <p className="text-brand-800 font-semibold">
                 {operationMeta(transaction.type).label}
               </p>
-              <p className="text-accent-600 font-display font-bold">
+              <p className="text-accent-600 font-bold">
                 {formatSigned(transaction.amount, directionOf(transaction.type))}
               </p>
             </div>
