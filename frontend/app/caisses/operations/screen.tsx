@@ -77,7 +77,7 @@ function Historique({ id }: { id: string }) {
             Rechercher une opération
           </label>
           <div className="border-line flex items-center gap-3 rounded-full border px-4">
-            <Search className="text-brand-700/60 size-5 shrink-0" aria-hidden />
+            <Search className="text-brand-700/80 size-5 shrink-0" aria-hidden />
             <input
               id="recherche-operation"
               type="search"

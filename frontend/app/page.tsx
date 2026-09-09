@@ -1,6 +1,10 @@
+'use client';
+
 import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
+import { m, trackingIn } from '@/components/ui/motion';
 import { routes } from '@/lib/routes';
+import { cn } from '@/lib/utils';
 
 /**
  * Écran d'ouverture (maquette « iPhone 17 - 1 »).
@@ -23,15 +27,47 @@ export default function SplashPage() {
 
       <div className="relative z-10 flex flex-col items-center gap-8 px-6 text-center">
         <div>
-          <h1 className="font-display text-brand-800 text-5xl font-bold tracking-wide">AKWÈ</h1>
-          <p className="font-display text-brand-800 pt-2 text-sm font-semibold">
+          <m.h1
+            variants={trackingIn}
+            initial="hidden"
+            animate="visible"
+            className="font-display text-brand-800 text-5xl"
+          >
+            AKWÈ
+          </m.h1>
+          <m.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.35, ease: 'easeOut' }}
+            className="font-display text-brand-800 pt-2 text-sm"
+          >
             Le carnet des tontines
-          </p>
+          </m.p>
         </div>
 
-        <Link href={routes.connexion} className={buttonVariants({ size: 'lg' })}>
-          Commencer
-        </Link>
+        <m.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.5, ease: 'easeOut' }}
+          className="w-full"
+        >
+          <div className="relative">
+            {/* C'est le halo qui respire, pas le bouton : la cible tactile ne
+                bouge jamais sous le doigt et reste stable pour les tests. */}
+            <m.span
+              aria-hidden
+              className="bg-accent-500 absolute inset-0 rounded-xl"
+              animate={{ scale: [1, 1.06, 1], opacity: [0.35, 0, 0.35] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+            />
+            <Link
+              href={routes.connexion}
+              className={cn(buttonVariants({ size: 'lg' }), 'relative')}
+            >
+              Commencer
+            </Link>
+          </div>
+        </m.div>
       </div>
     </main>
   );

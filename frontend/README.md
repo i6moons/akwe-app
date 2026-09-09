@@ -47,6 +47,35 @@ Le parcours saisie → confirmation → succès tient dans une seule page
 (`components/operation/operation-flow.tsx`) : entre le moment où la trésorière
 parle et celui où elle voit son reçu, aucune requête réseau.
 
+## Deux polices, et rien d'autre
+
+`Inknut Antiqua 700` pour les titres, `Inter` pour tout le reste, déclarées une
+seule fois dans `lib/fonts.ts` et exposées en variables Tailwind (`font-display`,
+`font-body`). Les fichiers sont servis depuis notre domaine, pas depuis
+`fonts.googleapis.com` : sinon l'application aurait besoin du réseau pour
+s'afficher correctement, ce qui ruinerait le mode hors ligne.
+
+Inknut Antiqua est une antiqua large. Elle est réservée aux titres de page et de
+section et aux grands montants ; dans une ligne de liste ou un libellé de champ,
+elle déborde et fait passer les noms sur trois lignes. Un test de bout en bout
+(`tests/e2e/apparence.spec.ts`) vérifie qu'aucune autre famille n'apparaît.
+
+## L'action principale est toujours sous le pouce
+
+Tout bouton qui valide, enregistre ou supprime passe par `ui/fixed-action.tsx` :
+il est ancré en bas de l'écran, au-dessus de la zone sûre iOS, quelle que soit la
+longueur du formulaire. Les liens de navigation et les filtres restent dans le
+flux de la page.
+
+## Animations
+
+`framer-motion` est chargé via `LazyMotion` et les composants `m` (voir
+`ui/motion.tsx`) : environ 20 ko de moins que l'import direct, ce qui compte sur
+une 3G. `MotionConfig reducedMotion="user"` respecte le réglage système.
+
+Rien qui bouge en boucle ne doit déplacer une cible tactile : sur l'écran
+d'ouverture, c'est un halo qui pulse derrière le bouton, pas le bouton.
+
 ## Organisation
 
 ```

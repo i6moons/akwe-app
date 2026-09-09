@@ -7,7 +7,9 @@ import { AppHeader } from '@/components/layout/app-header';
 import { MemberRow } from '@/components/membre/member-row';
 import { Card } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
+import { FixedAction } from '@/components/ui/fixed-action';
 import { EmptyState, SkeletonList } from '@/components/ui/states';
+import { StaggerItem, StaggerList } from '@/components/ui/motion';
 import { useMembers } from '@/lib/hooks/use-akwe';
 import { routes } from '@/lib/routes';
 import { MissingParam } from '@/components/layout/screen-states';
@@ -49,7 +51,7 @@ function MembresListe({ id }: { id: string }) {
           Rechercher un membre
         </label>
         <div className="bg-surface rounded-card flex items-center gap-3 px-4">
-          <Search className="text-brand-700/60 size-5 shrink-0" aria-hidden />
+          <Search className="text-brand-700/80 size-5 shrink-0" aria-hidden />
           <input
             id="recherche-membre"
             type="search"
@@ -83,23 +85,23 @@ function MembresListe({ id }: { id: string }) {
           />
         ) : (
           <Card className="py-0">
-            <ul>
+            <StaggerList>
               {filtered.map((member) => (
-                <li key={member.id}>
+                <StaggerItem key={member.id}>
                   <MemberRow member={member} />
-                </li>
+                </StaggerItem>
               ))}
-            </ul>
+            </StaggerList>
           </Card>
         )}
       </div>
 
-      <div className="px-4 pt-6">
+      <FixedAction>
         <Link href={routes.nouveauMembre(id)} className={buttonVariants({ size: 'lg' })}>
           <Plus className="size-5" aria-hidden />
           Ajouter un membre
         </Link>
-      </div>
+      </FixedAction>
     </main>
   );
 }

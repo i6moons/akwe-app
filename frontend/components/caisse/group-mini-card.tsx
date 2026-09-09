@@ -23,13 +23,9 @@ export function GroupMiniCard({
       <span className="bg-brand-600 flex size-9 items-center justify-center rounded-full text-white">
         <Users className="size-5" aria-hidden />
       </span>
-      <span className="font-display text-brand-800 line-clamp-2 text-sm font-bold">
-        {group.name}
-      </span>
-      <span className="text-brand-700/70 text-xs">{memberCount} membres</span>
-      <span className="font-display text-brand-800 text-sm font-bold">
-        {formatMoneyLong(balance)}
-      </span>
+      <span className="text-brand-800 line-clamp-2 text-sm font-bold">{group.name}</span>
+      <span className="text-brand-700/80 text-xs">{memberCount} membres</span>
+      <span className="text-brand-800 text-sm font-bold">{formatMoneyLong(balance)}</span>
       <span className="mt-auto flex items-center justify-between pt-1">
         {group.isActive ? <Badge tone="active">Active</Badge> : <span />}
         <ChevronRight className="text-brand-600 size-4" aria-hidden />

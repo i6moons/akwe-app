@@ -28,9 +28,9 @@ export function ActionRow({
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="font-display text-brand-800 block font-bold">{title}</span>
+        <span className="text-brand-800 block font-bold">{title}</span>
         {description ? (
-          <span className="text-brand-700/70 block text-xs">{description}</span>
+          <span className="text-brand-700/80 block text-xs">{description}</span>
         ) : null}
       </span>
       <ChevronRight className="text-brand-600 size-5 shrink-0" aria-hidden />

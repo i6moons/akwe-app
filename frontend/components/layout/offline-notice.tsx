@@ -17,7 +17,7 @@ export function OfflineNotice() {
       <Info className="text-warn-500 size-5 shrink-0" aria-hidden />
       <div className="text-brand-800 text-sm">
         <p className="font-semibold">Vous êtes actuellement hors connexion</p>
-        <p className="text-brand-700/70">
+        <p className="text-brand-700/80">
           L&apos;opération sera enregistrée sur votre appareil et synchronisée dès que la connexion
           sera de retour.
         </p>

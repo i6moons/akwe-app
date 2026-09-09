@@ -33,7 +33,7 @@ export function InfoRow({
     >
       {icon ? <span className="text-brand-600 shrink-0">{icon}</span> : null}
       <span className="text-brand-700/80 flex-1 text-sm">{label}</span>
-      <span className="font-display text-brand-800 text-right font-semibold">{value}</span>
+      <span className="text-brand-800 text-right font-semibold">{value}</span>
     </div>
   );
 }

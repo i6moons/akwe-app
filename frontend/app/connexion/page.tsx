@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Wordmark } from '@/components/brand/wordmark';
 import { Button } from '@/components/ui/button';
+import { FixedAction } from '@/components/ui/fixed-action';
 import { formatPhone } from '@/lib/format';
 import { setPendingPhone } from '@/lib/auth/session';
 import { routes } from '@/lib/routes';
@@ -68,11 +69,11 @@ export default function ConnexionPage() {
           </p>
         ) : null}
 
-        <div className="safe-bottom mt-auto pt-10">
+        <FixedAction>
           <Button type="submit" size="lg" disabled={!isValid}>
             Envoyez le code OTP
           </Button>
-        </div>
+        </FixedAction>
       </form>
     </main>
   );

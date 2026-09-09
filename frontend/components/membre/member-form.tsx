@@ -4,6 +4,7 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 import { Info, User } from 'lucide-react';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { FixedAction } from '@/components/ui/fixed-action';
 import { BareInput, Field, IconField, Input } from '@/components/ui/field';
 import { formatPhone, toDateInput } from '@/lib/format';
 
@@ -106,12 +107,12 @@ export function MemberForm({
         {showStatus ? <StatusToggle value={isActive} onChange={setIsActive} /> : null}
       </Card>
 
-      <div className="mt-auto pt-8">
-        <Button type="submit" size="lg" disabled={saving}>
-          {submitIcon}
+      <FixedAction>
+        <Button type="submit" size="lg" loading={saving}>
+          {saving ? null : submitIcon}
           {saving ? 'Enregistrement…' : submitLabel}
         </Button>
-      </div>
+      </FixedAction>
     </form>
   );
 }

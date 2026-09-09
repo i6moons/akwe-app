@@ -92,7 +92,7 @@ function Fact({
         <span aria-hidden>{icon}</span>
         {label}
       </dt>
-      <dd className="font-display truncate text-xs font-semibold">{children}</dd>
+      <dd className="truncate text-xs font-semibold">{children}</dd>
     </div>
   );
 }

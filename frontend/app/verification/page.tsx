@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { Wordmark } from '@/components/brand/wordmark';
 import { Button } from '@/components/ui/button';
+import { FixedAction } from '@/components/ui/fixed-action';
 import { OtpInput, OTP_LENGTH } from '@/components/auth/otp-input';
 import { formatPhone } from '@/lib/format';
 import { getPendingPhone, openSession } from '@/lib/auth/session';
@@ -85,11 +86,11 @@ export default function VerificationPage() {
         </button>
       </div>
 
-      <div className="safe-bottom mt-auto pt-10">
+      <FixedAction>
         <Button size="lg" onClick={handleSubmit} disabled={!complete}>
           Suivant
         </Button>
-      </div>
+      </FixedAction>
     </main>
   );
 }

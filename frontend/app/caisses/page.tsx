@@ -6,7 +6,9 @@ import { Plus, Search, Wallet } from 'lucide-react';
 import { AppHeader } from '@/components/layout/app-header';
 import { GroupRow } from '@/components/caisse/group-row';
 import { buttonVariants } from '@/components/ui/button';
+import { FixedAction } from '@/components/ui/fixed-action';
 import { EmptyState, SkeletonList } from '@/components/ui/states';
+import { StaggerItem, StaggerList } from '@/components/ui/motion';
 import { useGroupRows } from '@/lib/hooks/use-akwe';
 import { routes } from '@/lib/routes';
 
@@ -38,7 +40,7 @@ export default function CaissesPage() {
           Rechercher une caisse
         </label>
         <div className="bg-surface rounded-card flex items-center gap-3 px-4">
-          <Search className="text-brand-700/60 size-5 shrink-0" aria-hidden />
+          <Search className="text-brand-700/80 size-5 shrink-0" aria-hidden />
           <input
             id="recherche-caisse"
             type="search"
@@ -64,22 +66,22 @@ export default function CaissesPage() {
             }
           />
         ) : (
-          <ul className="space-y-3">
+          <StaggerList className="space-y-3">
             {filtered.map((row) => (
-              <li key={row.group.id}>
+              <StaggerItem key={row.group.id}>
                 <GroupRow {...row} />
-              </li>
+              </StaggerItem>
             ))}
-          </ul>
+          </StaggerList>
         )}
       </div>
 
-      <div className="px-4 pt-6">
+      <FixedAction>
         <Link href={routes.nouvelleCaisse} className={buttonVariants({ size: 'lg' })}>
           <Plus className="size-5" aria-hidden />
           Nouvelle caisse
         </Link>
-      </div>
+      </FixedAction>
     </main>
   );
 }

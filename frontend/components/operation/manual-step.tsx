@@ -6,6 +6,7 @@ import { AppHeader } from '@/components/layout/app-header';
 import { TypePicker } from '@/components/operation/type-picker';
 import { OfflineNotice } from '@/components/layout/offline-notice';
 import { Button } from '@/components/ui/button';
+import { FixedAction } from '@/components/ui/fixed-action';
 import { Card } from '@/components/ui/card';
 import { BareInput, Field, IconField, Select } from '@/components/ui/field';
 import { SkeletonList } from '@/components/ui/states';
@@ -88,7 +89,7 @@ export function ManualStep({
           </Field>
 
           <div className="space-y-2">
-            <p className="font-display text-brand-800 font-semibold">
+            <p className="text-brand-800 font-semibold">
               Type d&apos;opération<span className="text-danger-500"> *</span>
             </p>
             <TypePicker value={type} onChange={setType} />
@@ -121,12 +122,12 @@ export function ManualStep({
           <OfflineNotice />
         </Card>
 
-        <div className="mt-auto pt-8">
+        <FixedAction>
           <Button type="submit" size="lg">
             <Save className="size-5" aria-hidden />
             Enregistrer
           </Button>
-        </div>
+        </FixedAction>
       </form>
     </main>
   );

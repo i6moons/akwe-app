@@ -28,7 +28,7 @@ export function TypePicker({
           <p
             className={cn(
               'pb-2 text-sm font-medium',
-              group.direction === 'in' ? 'text-accent-600' : 'text-brand-700/70',
+              group.direction === 'in' ? 'text-accent-600' : 'text-brand-700/80',
             )}
           >
             {group.label}

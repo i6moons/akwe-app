@@ -18,8 +18,22 @@ export function EmptyState({
         {icon}
       </span>
       <p className="text-brand-800 font-semibold">{title}</p>
-      <p className="text-brand-700/70 text-sm">{description}</p>
+      <p className="text-brand-700/80 text-sm">{description}</p>
     </Card>
+  );
+}
+
+/** Rouet de chargement, pour les actions courtes qui n'ont pas de squelette. */
+export function Spinner({ className }: { className?: string }) {
+  return (
+    <span
+      role="status"
+      aria-label="Chargement en cours"
+      className={cn(
+        'inline-block animate-spin rounded-full border-2 border-current border-t-transparent',
+        className ?? 'size-5',
+      )}
+    />
   );
 }
 
@@ -43,7 +57,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
   return (
     <Card className="space-y-3 text-center">
       <p className="text-brand-800 font-semibold">Une erreur est survenue</p>
-      <p className="text-brand-700/70 text-sm">{message}</p>
+      <p className="text-brand-700/80 text-sm">{message}</p>
       {onRetry ? (
         <button
           type="button"

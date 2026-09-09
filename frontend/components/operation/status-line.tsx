@@ -17,7 +17,7 @@ export function StatusLine({
       </span>
       <span className="text-sm">
         <span className="text-brand-800 block font-semibold">{title}</span>
-        <span className="text-brand-700/70 block">{description}</span>
+        <span className="text-brand-700/80 block">{description}</span>
       </span>
     </div>
   );

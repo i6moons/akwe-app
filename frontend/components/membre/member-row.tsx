@@ -14,10 +14,8 @@ export function MemberRow({ member }: { member: Member }) {
     >
       <Avatar name={member.fullName} />
       <span className="min-w-0 flex-1">
-        <span className="font-display text-brand-800 block truncate font-bold">
-          {member.fullName}
-        </span>
-        <span className="text-brand-700/70 block text-xs">
+        <span className="text-brand-800 block truncate font-bold">{member.fullName}</span>
+        <span className="text-brand-700/80 block text-xs">
           Membre depuis {formatDateLong(member.joinedAt)}
         </span>
       </span>

@@ -6,6 +6,7 @@ import { Plus } from 'lucide-react';
 import { AppHeader } from '@/components/layout/app-header';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { FixedAction } from '@/components/ui/fixed-action';
 import { Field, Input, Select } from '@/components/ui/field';
 import { OfflineNotice } from '@/components/layout/offline-notice';
 import { createGroup } from '@/lib/db/repository';
@@ -109,12 +110,12 @@ export default function NouvelleCaissePage() {
           ) : null}
         </Card>
 
-        <div className="mt-auto pt-8">
-          <Button type="submit" size="lg" disabled={saving}>
-            <Plus className="size-5" aria-hidden />
+        <FixedAction>
+          <Button type="submit" size="lg" loading={saving}>
+            {saving ? null : <Plus className="size-5" aria-hidden />}
             {saving ? 'Enregistrement…' : 'Créer la caisse'}
           </Button>
-        </div>
+        </FixedAction>
       </form>
     </main>
   );

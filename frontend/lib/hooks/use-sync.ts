@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { flushOutbox, pendingCount } from '@/lib/sync/outbox';
 import { sendBatch } from '@/lib/sync/client';
 import { useOnline } from '@/lib/hooks/use-online';
+import { useToast } from '@/components/ui/toast';
 
 export interface SyncState {
   online: boolean;
@@ -21,8 +22,10 @@ export interface SyncState {
  */
 export function useSync(): SyncState {
   const online = useOnline();
+  const notify = useToast();
   const [syncing, setSyncing] = useState(false);
   const pending = useLiveQuery(() => pendingCount(), [], 0) ?? 0;
+  const wasPending = useRef(0);
 
   const flush = useCallback(async (): Promise<void> => {
     if (!navigator.onLine) return;
@@ -37,6 +40,17 @@ export function useSync(): SyncState {
   useEffect(() => {
     if (online && pending > 0) void flush();
   }, [online, pending, flush]);
+
+  // La file vient de se vider : on le dit, sinon la remontée est invisible et
+  // la trésorière ne sait pas si ses saisies sont parties.
+  useEffect(() => {
+    const previous = wasPending.current;
+    wasPending.current = pending;
+    if (previous > 0 && pending === 0) {
+      const plural = previous > 1 ? 's' : '';
+      notify('success', `${previous} opération${plural} synchronisée${plural}`);
+    }
+  }, [pending, notify]);
 
   return { online, pending, syncing, flush };
 }
