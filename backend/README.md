@@ -31,23 +31,23 @@ npm run dev          # http://127.0.0.1:3460
 ```
 
 Sans `SUPABASE_*`, le serveur utilise une **mémoire locale** (idempotente) pour
-la démo. Branchez Supabase quand les clés sont prêtes — aucune autre modification.
+la démo. Branchez Supabase quand les clés sont prêtes — aucune autre mesure.
 
 Projet hébergé : [cnwrgnpsvwxpeuyijbeu](https://supabase.com/dashboard/project/cnwrgnpsvwxpeuyijbeu)
 (`https://cnwrgnpsvwxpeuyijbeu.supabase.co`).
 
 MCP Cursor : [`.cursor/mcp.json`](../.cursor/mcp.json) (lecture seule, scoped
 à ce projet). Dans Cursor : **Settings → Tools & MCP → supabase → Enable**,
-puis **Login**. `agent mcp login supabase` si tu as le CLI. Cette session
-Cloud n'a pas le binaire `agent` : l'OAuth se fait dans l'IDE.
+puis **Login**.
 
-Appliquer **uniquement** ceci dans le SQL Editor (rôle postgres), dans l'ordre :
+SQL Editor (rôle postgres), dans l'ordre, **une seule fois** :
 
-1. `supabase/migrations/0001_init.sql` — schéma + RLS
-2. `supabase/seed.sql` — Tontine Ayaba, solde attendu **174 000 F**
+1. `supabase/migrations/0001_init.sql` — schéma
+2. `supabase/migrations/0002_rls.sql` — politiques (si `0001` ne les a pas déjà)
+3. `supabase/seed.sql` — Tontine Ayaba, solde attendu **174 000 F**
 
-Ne pas exécuter `supabase/migrations/0002_rls.sql` après `0001` : les politiques
-sont déjà dans `0001` et le second fichier les recréerait (erreur).
+Le projet hébergé a déjà reçu le schéma + le seed. Ne pas relancer `0002` si
+les politiques existent (« policy already exists »).
 
 Vérification après le seed :
 
