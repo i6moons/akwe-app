@@ -1,12 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { applyIdempotentInsert, validateLot, type IncomingOperation, type ValidOperation } from '@/lib/sync/validate';
+import {
+  applyIdempotentInsert,
+  validateLot,
+  type IncomingOperation,
+  type ValidOperation,
+} from '@/lib/sync/validate';
 
 const ctx = {
   ownedGroupIds: new Set(['grp-ayaba']),
   memberIdsByGroup: new Map([['grp-ayaba', new Set(['grp-ayaba-m0', 'grp-ayaba-m1'])]]),
 };
 
-function op(partial: Partial<IncomingOperation> & Pick<IncomingOperation, 'client_uuid'>): IncomingOperation {
+function op(
+  partial: Partial<IncomingOperation> & Pick<IncomingOperation, 'client_uuid'>,
+): IncomingOperation {
   return {
     group_id: 'grp-ayaba',
     member_id: 'grp-ayaba-m0',

@@ -44,9 +44,13 @@ function parseOperations(body: unknown): SyncedOperation[] {
       member_phone: typeof row.member_phone === 'string' ? row.member_phone : null,
       member_name: typeof row.member_name === 'string' ? row.member_name : null,
       amount: typeof row.amount === 'number' ? row.amount : 0,
-      occurred_at:
-        typeof row.occurred_at === 'string' ? row.occurred_at : new Date().toISOString(),
-      total_saved: typeof row.total_saved === 'number' ? row.total_saved : typeof row.amount === 'number' ? row.amount : 0,
+      occurred_at: typeof row.occurred_at === 'string' ? row.occurred_at : new Date().toISOString(),
+      total_saved:
+        typeof row.total_saved === 'number'
+          ? row.total_saved
+          : typeof row.amount === 'number'
+            ? row.amount
+            : 0,
     });
   }
 

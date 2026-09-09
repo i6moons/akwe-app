@@ -69,9 +69,7 @@ function readAmount(raw: unknown): number | null {
 }
 
 /** Accepte `operations` (contrat) ou `batch` (file hors ligne existante). */
-export function extractOperations(
-  body: unknown,
-): IncomingOperation[] | { error: string } {
+export function extractOperations(body: unknown): IncomingOperation[] | { error: string } {
   const record = asRecord(body);
   if (!record) return { error: 'Un objet JSON est requis.' };
 

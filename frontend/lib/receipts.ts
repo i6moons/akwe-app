@@ -61,10 +61,9 @@ export function firstName(fullName: string | null): string {
   return token && token.length > 0 ? token : 'membre';
 }
 
-export function buildReceiptMessage(row: Pick<
-  ReceiptRow,
-  'member_first_name' | 'amount' | 'occurred_at' | 'total_saved'
->): string {
+export function buildReceiptMessage(
+  row: Pick<ReceiptRow, 'member_first_name' | 'amount' | 'occurred_at' | 'total_saved'>,
+): string {
   const date = DATE_FR.format(new Date(row.occurred_at));
   return `Bonjour ${row.member_first_name}, votre cotisation de ${formatFcfa(row.amount)} du ${date} a bien été enregistrée. Votre total épargné : ${formatFcfa(row.total_saved)}. Envoyé par AKWÈ.`;
 }
@@ -118,7 +117,10 @@ function isDemoMode(): boolean {
   return process.env.DEMO_MODE === 'true' || process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 }
 
-async function postWhatsApp(phone: string, text: string): Promise<{ id: string } | { error: string }> {
+async function postWhatsApp(
+  phone: string,
+  text: string,
+): Promise<{ id: string } | { error: string }> {
   const token = process.env.WHATSAPP_TOKEN?.trim();
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim();
   if (!token || !phoneNumberId) return { error: 'WhatsApp non configuré' };

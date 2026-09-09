@@ -147,8 +147,7 @@ export function emptyParse(clarification: string): VoiceParseResult {
 }
 
 export function demoResponse(today: string, members: readonly CaisseMember[]): VoiceParseResult {
-  const kossi =
-    matchExistingMember('Kossi', members) ??
+  const kossi = matchExistingMember('Kossi', members) ??
     members.find((member) => fold(member.full_name).includes('kossi')) ?? {
       id: DEMO_KOSSI_ID,
       full_name: DEMO_KOSSI_NAME,
@@ -173,8 +172,7 @@ export function validateModelPayload(
   members: readonly CaisseMember[],
   today: string,
 ): VoiceParseResult {
-  const record =
-    raw !== null && typeof raw === 'object' ? (raw as Record<string, unknown>) : null;
+  const record = raw !== null && typeof raw === 'object' ? (raw as Record<string, unknown>) : null;
   if (!record) {
     return emptyParse("Je n'ai pas compris. Pouvez-vous répéter, plus simplement ?");
   }
