@@ -104,7 +104,9 @@ function scoreFromInput(input: ScoreInput): ScoreResult {
   const expected = expectedDue(input.joinedAt, input.frequency, now);
   const regularityRatio = clamp01(expected === 0 ? 0 : contributions.length / expected);
 
-  const borrowed = own.filter((item) => item.type === 'loan').reduce((sum, item) => sum + item.amount, 0);
+  const borrowed = own
+    .filter((item) => item.type === 'loan')
+    .reduce((sum, item) => sum + item.amount, 0);
   const repaid = own
     .filter((item) => item.type === 'repayment')
     .reduce((sum, item) => sum + item.amount, 0);
