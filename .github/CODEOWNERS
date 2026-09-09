@@ -1,0 +1,16 @@
+# Une personne = un domaine. Personne n'écrit dans le dossier d'un autre :
+# c'est ce qui évite les conflits de merge en série.
+# Remplacez les identifiants GitHub par les vrais avant d'activer la protection de branche.
+
+# Interface, composants, offline côté client, PWA
+/frontend/       @delprudence
+
+# Base de données, API, synchronisation serveur, IA vocale
+/backend/        @delprudence
+
+# Le contrat d'API engage les deux côtés : relecture conjointe.
+/backend/contracts/  @delprudence
+
+# Chaîne d'intégration et documentation d'équipe
+/.github/        @delprudence
+/*.md            @delprudence

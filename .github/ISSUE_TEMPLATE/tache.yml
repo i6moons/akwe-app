@@ -1,0 +1,46 @@
+name: 🧱 Tâche
+description: Un élément du périmètre à construire
+labels: ['tâche']
+body:
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Domaine
+      description: Une personne = un domaine. Personne n'écrit dans le dossier d'un autre.
+      options:
+        - 'Front / UX (Prudence)'
+        - 'Back / Supabase / IA (Malick)'
+        - 'Produit / Pitch (Nafissathou)'
+        - 'Business / Terrain'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Périmètre
+      options:
+        - 'MUST — chemin de démo'
+        - 'SHOULD — si le must-have est stable'
+        - 'ROADMAP — à ne pas coder'
+    validations:
+      required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Objectif
+      placeholder: "Écran d'ajout d'un membre, conforme à la maquette iPhone 17 - 11."
+    validations:
+      required: true
+
+  - type: textarea
+    id: done
+    attributes:
+      label: Définition de « terminé »
+      value: |
+        - [ ] Conforme à la maquette
+        - [ ] États chargement / vide / erreur / hors ligne
+        - [ ] Test ajouté
+    validations:
+      required: true

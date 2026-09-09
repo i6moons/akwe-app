@@ -1,0 +1,101 @@
+@import 'tailwindcss';
+
+/**
+ * Design system AKWÈ.
+ * Les valeurs sont relevées directement sur les maquettes (Projets de design).
+ */
+@theme {
+  --color-brand-950: #00332f;
+  --color-brand-900: #003b38;
+  --color-brand-800: #004643; /* fond de l'application */
+  --color-brand-700: #0f514e;
+  --color-brand-600: #027c77; /* carte « solde de la caisse » */
+  --color-brand-500: #1f7d78;
+  --color-brand-100: #c4d2d1;
+
+  --color-accent-500: #05dc7f; /* boutons d'action principaux */
+  --color-accent-600: #04c471;
+  --color-accent-200: #38e198;
+  --color-accent-100: #d4f5e4;
+
+  --color-surface: #f5f5f5; /* cartes claires */
+  --color-surface-2: #dde4e4; /* blocs secondaires dans une carte */
+  --color-line: #c4d2d1;
+  --color-muted: #99b3b2;
+
+  --color-danger-500: #ff6b6b;
+  --color-danger-100: #f6d0d0;
+  --color-warn-100: #fbf3d6;
+  --color-warn-500: #d4a017;
+
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-playfair), ui-serif, Georgia, serif;
+
+  --radius-card: 1rem;
+  --radius-field: 0.625rem;
+
+  /* Zone tactile minimale imposée par le .cursorrules. */
+  --spacing-touch: 3rem;
+}
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    background-color: var(--color-brand-800);
+  }
+
+  body {
+    @apply bg-brand-800 font-sans text-white antialiased;
+    /* Évite le rebond élastique iOS qui donne l'impression d'un bug pendant la démo. */
+    overscroll-behavior-y: none;
+  }
+
+  h1,
+  h2,
+  .font-display {
+    @apply font-display;
+  }
+
+  /* Champs de saisie : 48px minimum, gros texte, fort contraste. */
+  input,
+  select,
+  textarea,
+  button {
+    font: inherit;
+  }
+
+  :focus-visible {
+    @apply outline-accent-500 outline-2 outline-offset-2;
+  }
+}
+
+@layer utilities {
+  /* Empêche le zoom automatique iOS sur les champs (<16px). */
+  .text-field {
+    font-size: max(1rem, 16px);
+  }
+
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

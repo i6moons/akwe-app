@@ -1,0 +1,49 @@
+name: 🐛 Bug
+description: Un comportement qui casse le parcours ou l'interface
+labels: ['bug']
+body:
+  - type: dropdown
+    id: demo
+    attributes:
+      label: Est-ce sur le chemin de démo ?
+      description: Un bug hors chemin de démo n'est pas prioritaire avant la finale.
+      options:
+        - 'Oui — bloquant pour le pitch'
+        - 'Non'
+    validations:
+      required: true
+
+  - type: input
+    id: screen
+    attributes:
+      label: Écran concerné
+      placeholder: 'Historique des opérations'
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Comment le reproduire
+      placeholder: |
+        1. Ouvrir la caisse « Tontine Ayaba »
+        2. Couper le réseau
+        3. Saisir une cotisation
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Attendu / obtenu
+      placeholder: |
+        Attendu : badge « 1 en attente »
+        Obtenu : rien ne s'affiche
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Appareil et navigateur
+      placeholder: 'Android 12, Chrome 129'
