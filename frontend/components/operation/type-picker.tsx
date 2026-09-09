@@ -43,8 +43,8 @@ export function TypePicker({
                   type="button"
                   aria-pressed={selected}
                   onClick={() => onChange(meta.type)}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: 1 }}
                   transition={{ duration: 0.15, ease: 'easeOut' }}
                   className={cn(
                     'min-h-touch flex items-center gap-1 rounded-full px-4 font-medium',

@@ -12,8 +12,22 @@ import { m } from '@/components/ui/motion';
  * un mouvement plus appuyé donnerait une impression de lenteur sur les
  * téléphones d'entrée de gamme que visent nos utilisatrices.
  */
+
+/**
+ * Le fondu est sauté au tout premier affichage.
+ *
+ * L'état `initial` est écrit en style en ligne dans le HTML du serveur : partir
+ * de `opacity: 0` rendait toute l'application invisible tant que le JavaScript
+ * n'était pas arrivé, et définitivement s'il échouait. Comme ce fichier est
+ * remonté à chaque navigation mais que le module, lui, persiste, un simple
+ * drapeau distingue l'arrivée sur le site des navigations suivantes.
+ */
+let premierRendu = true;
+
 export default function Template({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const sansFondu = premierRendu;
+  premierRendu = false;
 
   // Sans cela, on arrive au milieu d'un écran neuf après avoir fait défiler le
   // précédent. Instantané et non « smooth » : le fondu masque déjà le saut.
@@ -23,7 +37,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
 
   return (
     <m.div
-      initial={{ opacity: 0 }}
+      initial={sansFondu ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
     >

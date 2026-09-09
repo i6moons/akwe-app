@@ -107,6 +107,21 @@ une 3G. `MotionConfig reducedMotion="user"` respecte le réglage système.
 Rien qui bouge en boucle ne doit déplacer une cible tactile : sur l'écran
 d'ouverture, c'est un halo qui pulse derrière le bouton, pas le bouton.
 
+**Aucun état de départ ne met l'opacité à zéro.** `framer-motion` écrit l'état
+`initial` en style en ligne dans le HTML rendu par le serveur : une entrée en
+fondu laisse la page entièrement invisible tant que le JavaScript n'est pas
+arrivé, et définitivement s'il échoue. Le mouvement seul suffit à donner
+l'impression d'arrivée et se dégrade proprement. Seuls les éléments purement
+décoratifs, comme le halo de l'écran d'ouverture, animent leur opacité.
+
+Le fondu entre les écrans fait exception, mais il est sauté au tout premier
+affichage : `app/template.tsx` garde un drapeau au niveau du module, qui
+distingue l'arrivée sur le site des navigations suivantes.
+
+`apparence.spec.ts` charge l'application avec `javaScriptEnabled: false` et lit
+l'opacité calculée des titres. Attention : `toBeVisible()` de Playwright ne
+regarde pas l'opacité, il faut la vérifier soi-même.
+
 ## Retours à l'utilisatrice
 
 Une action qui ne dit rien laisse croire qu'elle a échoué, et on la refait.

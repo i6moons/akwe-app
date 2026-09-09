@@ -86,6 +86,28 @@ test.describe('Apparence', () => {
     await expect(menu).toBeHidden();
   });
 
+  test('le contenu reste lisible avant même que le JavaScript arrive', async ({ browser }) => {
+    // L'état de départ d'une animation est écrit en style en ligne dans le HTML
+    // du serveur. Une entrée en fondu laissait donc l'application entièrement
+    // invisible tant que le script n'était pas chargé — plusieurs secondes sur
+    // une 3G, et indéfiniment s'il échoue.
+    const contexte = await browser.newContext({ javaScriptEnabled: false });
+    const sansScript = await contexte.newPage();
+
+    for (const chemin of ['/', '/accueil']) {
+      await sansScript.goto(chemin);
+      const titre = sansScript.locator('h1').first();
+
+      await expect(titre).toBeVisible();
+      expect(await titre.textContent()).toBeTruthy();
+      // `toBeVisible` ne regarde pas l'opacité : il faut la lire soi-même.
+      const opacite = await titre.evaluate((n) => Number(getComputedStyle(n).opacity));
+      expect(opacite, `titre invisible sur ${chemin}`).toBeGreaterThan(0.9);
+    }
+
+    await contexte.close();
+  });
+
   test("sur grand écran, le contenu reste dans une colonne au lieu de s'étirer", async ({
     page,
   }) => {

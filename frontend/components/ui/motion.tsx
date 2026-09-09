@@ -22,10 +22,24 @@ export function MotionProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Aucun état de départ ne met l'opacité à zéro.
+ *
+ * `framer-motion` écrit l'état `initial` en style en ligne dans le HTML rendu
+ * par le serveur. Une entrée en fondu laisse donc la page entièrement
+ * invisible tant que le JavaScript n'est pas arrivé — sur une 3G intermittente,
+ * cela peut durer plusieurs secondes, et rester ainsi si le script échoue.
+ * L'application affichait un écran vert vide alors que tout le texte était bien
+ * là, à `opacity: 0`.
+ *
+ * Le mouvement seul suffit à donner l'impression d'arrivée, et il se dégrade
+ * proprement : sans JavaScript, le contenu est simplement en place.
+ */
+
 /** Apparition simple : léger glissement vers le haut. */
 export const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
+  hidden: { y: 12 },
+  visible: { y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
 };
 
 /** Conteneur qui fait apparaître ses enfants l'un après l'autre. */
@@ -36,9 +50,8 @@ export const stagger: Variants = {
 
 /** Titre : les lettres se resserrent en apparaissant. */
 export const trackingIn: Variants = {
-  hidden: { opacity: 0, letterSpacing: '0.1em' },
+  hidden: { letterSpacing: '0.1em' },
   visible: {
-    opacity: 1,
     letterSpacing: '-0.01em',
     transition: { duration: 0.6, ease: 'easeOut' },
   },
