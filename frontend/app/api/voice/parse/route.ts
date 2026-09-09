@@ -34,8 +34,7 @@ async function fetchMembers(groupId: string): Promise<CaisseMember[]> {
 
   if (error || !data) return [];
   return data.filter(
-    (row): row is CaisseMember =>
-      typeof row.id === 'string' && typeof row.full_name === 'string',
+    (row): row is CaisseMember => typeof row.id === 'string' && typeof row.full_name === 'string',
   );
 }
 
@@ -49,8 +48,7 @@ async function callModel(
   }
 
   const model = process.env.LLM_MODEL ?? 'llama-3.1-8b-instant';
-  const endpoint =
-    process.env.LLM_API_URL ?? 'https://api.groq.com/openai/v1/chat/completions';
+  const endpoint = process.env.LLM_API_URL ?? 'https://api.groq.com/openai/v1/chat/completions';
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), MODEL_TIMEOUT_MS);
@@ -89,11 +87,14 @@ async function callModel(
     }
 
     const body: unknown = await response.json();
-    const record = body !== null && typeof body === 'object' ? (body as Record<string, unknown>) : null;
+    const record =
+      body !== null && typeof body === 'object' ? (body as Record<string, unknown>) : null;
     const choices = record && Array.isArray(record.choices) ? record.choices : [];
     const first = choices[0];
     const message =
-      first !== null && typeof first === 'object' ? (first as Record<string, unknown>).message : null;
+      first !== null && typeof first === 'object'
+        ? (first as Record<string, unknown>).message
+        : null;
     const content =
       message !== null && typeof message === 'object'
         ? (message as Record<string, unknown>).content
@@ -140,9 +141,7 @@ export async function POST(request: Request) {
   }
 
   if (input.transcript === '') {
-    return NextResponse.json(
-      emptyParse("Je n'ai rien entendu. Pouvez-vous répéter ?"),
-    );
+    return NextResponse.json(emptyParse("Je n'ai rien entendu. Pouvez-vous répéter ?"));
   }
 
   const model = await callModel(input, members);
