@@ -78,7 +78,7 @@ create index transactions_client_uuid_idx
   on transactions (client_uuid);
 
 -- RLS : une trésorière n'accède qu'à ses caisses, et aux lignes rattachées.
-alter table users         enable row level dsecurity;
+alter table users         enable row level security;
 alter table groups        enable row level security;
 alter table members       enable row level security;
 alter table transactions  enable row level security;
