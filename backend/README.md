@@ -10,40 +10,70 @@ Base de données, API, synchronisation serveur et IA vocale.
 
 ## Contenu
 
-| Chemin                 | Rôle                                                      |
-| ---------------------- | --------------------------------------------------------- |
-| `supabase/migrations/` | Schéma SQL et politiques RLS, appliqués dans l'ordre       |
-| `contracts/api.ts`     | Types des requêtes et réponses attendues par le frontend   |
+| Chemin | Rôle |
+| --- | --- |
+| `supabase/migrations/` | Schéma SQL et politiques RLS |
+| `contracts/api.ts` | Types requête / réponse |
+| `src/sync/` | Upsert idempotent (`client_uuid`) |
+| `src/voice/` | Parseur FR local + LLM optionnel (Groq) |
+| `src/receipts/` | WhatsApp / SMS (mock si pas de jeton) |
+| `src/server.ts` | Serveur HTTP autonome (port 3460) |
+| `../frontend/app/api/*` | Adaptateurs Next (même handlers) |
 
 ## Mise en route
 
 ```bash
-# 1. Créer le projet sur supabase.com, puis récupérer l'URL et les clés
+cd backend
 cp .env.example .env.local
-
-# 2. Appliquer les migrations, dans l'ordre, depuis le SQL Editor de Supabase
-#    supabase/migrations/0001_init.sql
-#    supabase/migrations/0002_rls.sql
+npm install
+npm run test
+npm run dev          # http://127.0.0.1:3460
 ```
+
+Sans `SUPABASE_*`, le serveur utilise une **mémoire locale** (idempotente) pour
+la démo. Branchez Supabase quand les clés sont prêtes — aucune autre modification.
+
+Projet hébergé : [cnwrgnpsvwxpeuyijbeu](https://supabase.com/dashboard/project/cnwrgnpsvwxpeuyijbeu)
+(`https://cnwrgnpsvwxpeuyijbeu.supabase.co`).
+
+MCP Cursor : [`.cursor/mcp.json`](../.cursor/mcp.json) (lecture seule, scoped
+à ce projet). Dans Cursor : **Settings → Tools & MCP → supabase → Enable**,
+puis **Login**. `agent mcp login supabase` si tu as le CLI. Cette session
+Cloud n'a pas le binaire `agent` : l'OAuth se fait dans l'IDE.
+
+Appliquer **uniquement** ceci dans le SQL Editor (rôle postgres), dans l'ordre :
+
+1. `supabase/migrations/0001_init.sql` — schéma + RLS
+2. `supabase/seed.sql` — Tontine Ayaba, solde attendu **174 000 F**
+
+Ne pas exécuter `supabase/migrations/0002_rls.sql` après `0001` : les politiques
+sont déjà dans `0001` et le second fichier les recréerait (erreur).
+
+Vérification après le seed :
+
+```sql
+select coalesce(sum(case
+  when type = 'contribution' then amount
+  else -amount end), 0) as solde
+from transactions;
+-- → 174000
+```
+
+## Endpoints
+
+| Méthode | Chemin | Effet |
+| --- | --- |
+| `POST` | `/api/sync` | Remonte la file hors ligne, renvoie `confirmed[]` |
+| `POST` | `/api/voice/parse` | Structure une phrase dictée en JSON |
+| `POST` | `/api/receipts` | Envoie le reçu WhatsApp / SMS |
+| `GET`/`HEAD` | `/api/health` | Sonde + mode `supabase` \| `memory` |
+
+Côté frontend : laisser `NEXT_PUBLIC_API_URL` vide (même origine via les routes
+Next) **ou** pointer vers `http://127.0.0.1:3460` pour le serveur autonome.
 
 ## Points d'attention
 
-- **Les montants sont des entiers en FCFA.** Le schéma utilise `integer`, jamais
-  `numeric` ni `float`. Une contrainte `check (amount > 0)` refuse les montants nuls.
-- **`transactions.client_uuid` est unique.** C'est la clé d'idempotence : le
-  serveur fait un `upsert` dessus, donc un rejeu de la file d'attente après une
-  coupure réseau ne crée jamais de doublon.
-- **RLS activé sur toutes les tables.** Une trésorière ne voit que ses caisses.
-
-## Endpoints attendus par le frontend
-
-| Méthode | Chemin              | Utilisé par                                  |
-| ------- | ------------------- | -------------------------------------------- |
-| `POST`  | `/api/sync`         | `frontend/lib/sync/client.ts`                |
-| `POST`  | `/api/voice/parse`  | Saisie vocale (repli local si indisponible)  |
-| `POST`  | `/api/receipts`     | Reçu WhatsApp / SMS après une cotisation     |
-| `HEAD`  | `/api/health`       | Sonde de connexion (déjà servie côté front)  |
-
-Tant que ces routes n'existent pas, le frontend reste **entièrement
-fonctionnel hors ligne** : les écritures s'empilent dans la file d'attente et le
-badge « en attente » reste affiché.
+- **Montants = entiers FCFA.** Refus des floats.
+- **`client_uuid` unique** → rejeu de file sans doublon.
+- **RLS** : une trésorière ne voit que ses caisses.
+- **Voix** : jamais inventer un montant ; `amount: null` si doute.

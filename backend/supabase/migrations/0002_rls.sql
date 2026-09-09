@@ -1,6 +1,9 @@
 -- AKWÈ — cloisonnement par groupe (Row Level Security).
 -- Une trésorière ne voit que les caisses qu'elle possède. Rien ne fuit d'un
 -- groupe à l'autre, même si un identifiant est deviné.
+--
+-- NE PAS appliquer ce fichier après 0001_init.sql : le RLS et les politiques
+-- y sont déjà. Relancer 0002 provoque « policy already exists ».
 
 alter table users         enable row level security;
 alter table groups        enable row level security;
