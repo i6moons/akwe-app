@@ -60,7 +60,7 @@ Détails par dossier : [`frontend/README.md`](./frontend/README.md) ·
 | Framework    | Next.js 15 (App Router) + TypeScript strict    |
 | Style        | Tailwind CSS, composants maison façon shadcn/ui|
 | Hors ligne   | Dexie.js (IndexedDB) + service worker          |
-| Base et auth | Supabase (PostgreSQL, RLS)                     |
+| Base et auth | Supabase (PostgreSQL, RLS) — projet [`cnwrgnpsvwxpeuyijbeu`](https://supabase.com/dashboard/project/cnwrgnpsvwxpeuyijbeu) |
 | Voix         | Web Speech API + extraction LLM structurée     |
 | Déploiement  | Vercel, via GitHub Actions                     |
 
