@@ -94,15 +94,23 @@ test.describe('Apparence', () => {
     const contexte = await browser.newContext({ javaScriptEnabled: false });
     const sansScript = await contexte.newPage();
 
-    for (const chemin of ['/', '/accueil']) {
+    // Deux passages : le drapeau qui désactive le fondu d'entrée vit dans un
+    // module, et un module survit d'une requête à l'autre côté serveur. La
+    // deuxième visite est donc celle qui compte.
+    for (const chemin of ['/', '/accueil', '/', '/accueil']) {
       await sansScript.goto(chemin);
       const titre = sansScript.locator('h1').first();
 
       await expect(titre).toBeVisible();
       expect(await titre.textContent()).toBeTruthy();
-      // `toBeVisible` ne regarde pas l'opacité : il faut la lire soi-même.
-      const opacite = await titre.evaluate((n) => Number(getComputedStyle(n).opacity));
-      expect(opacite, `titre invisible sur ${chemin}`).toBeGreaterThan(0.9);
+
+      // `toBeVisible` ne regarde pas l'opacité, et `getComputedStyle` sur le
+      // titre seul ne dit rien de ses ancêtres : un titre opaque dans un
+      // conteneur transparent reste invisible. `checkVisibility` remonte l'arbre.
+      const visible = await titre.evaluate((n) =>
+        n.checkVisibility({ opacityProperty: true, visibilityProperty: true }),
+      );
+      expect(visible, `titre invisible sur ${chemin}`).toBe(true);
     }
 
     await contexte.close();
