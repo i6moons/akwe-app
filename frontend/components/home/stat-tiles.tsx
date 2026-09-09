@@ -1,5 +1,6 @@
 import { Users } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 
 export interface Stat {
   value: number | undefined;
@@ -12,9 +13,9 @@ export interface Stat {
  * Les quatre tiennent dans la largeur d'un téléphone : rien à faire défiler
  * pour connaître l'état de ses caisses.
  */
-export function StatTiles({ stats }: { stats: readonly Stat[] }) {
+export function StatTiles({ stats, className }: { stats: readonly Stat[]; className?: string }) {
   return (
-    <ul className="grid grid-cols-4 gap-2">
+    <ul className={cn('grid h-full grid-cols-4 gap-2', className)}>
       {stats.map((stat) => (
         <li
           key={stat.label}

@@ -67,6 +67,37 @@ il est ancré en bas de l'écran, au-dessus de la zone sûre iOS, quelle que soi
 longueur du formulaire. Les liens de navigation et les filtres restent dans le
 flux de la page.
 
+À partir de `lg`, ce raisonnement tombe : la souris atteint tout l'écran, et une
+barre collée en bas de fenêtre, loin du formulaire, perd son lien avec lui. Le
+bouton reprend alors sa place dans le flux, sous les champs.
+
+## Grands écrans
+
+L'application reste pensée pour le téléphone, mais elle sera ouverte sur un
+portable — ne serait-ce que pour la démonstration, projetée. Sans traitement,
+une carte s'étirait sur 1400 px et un champ destiné à recevoir « 2000 » en
+faisait mille.
+
+`layout/app-shell.tsx` pose la coquille : barre latérale permanente
+(`layout/side-nav.tsx`) et contenu borné à `max-w-4xl`. Elle vit dans les
+fournisseurs, donc dans `layout.tsx` et non `template.tsx` : la barre ne doit ni
+se remonter ni se refondre à chaque navigation, seul le contenu change. Les
+écrans d'ouverture et d'authentification en sont exclus (`lib/nav.ts`), ils
+occupent tout l'écran.
+
+Le tiroir des téléphones et la barre latérale lisent la même liste de
+destinations. Au-delà de `lg`, le bouton hamburger disparaît : il ferait doublon.
+
+Deux pièges rencontrés, à ne pas réintroduire :
+
+- Une grille CSS dimensionne ses pistes sur le contenu (`min-width: auto`). Poser
+  `grid` sur un conteneur qui abrite une liste défilante horizontale élargit la
+  piste et rend toute la page décalable latéralement. Le tableau de bord garde
+  donc `space-y` jusqu'à `lg`, et ses éléments portent `lg:min-w-0`.
+- Une liste en deux colonnes n'est pas toujours un gain : à 1024 px, une ligne de
+  caisse cassait son nom et son solde sur trois lignes. Elle ne passe en grille
+  qu'à `xl`.
+
 ## Animations
 
 `framer-motion` est chargé via `LazyMotion` et les composants `m` (voir

@@ -64,7 +64,10 @@ export function ManualStep({
     <main className="safe-bottom flex min-h-dvh flex-col pb-6">
       <AppHeader title="Saisir manuelle d'une opération" centered />
 
-      <form onSubmit={handleSubmit} className="flex flex-1 flex-col px-4">
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-1 flex-col px-4 lg:mx-auto lg:w-full lg:max-w-2xl"
+      >
         <Card className="space-y-5">
           <Field label="Membre" htmlFor="membre" required error={form.error('member')}>
             {members === undefined ? (

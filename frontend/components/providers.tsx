@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { seedDemoData } from '@/lib/db/seed';
 import { MotionProvider } from '@/components/ui/motion';
 import { ToastProvider } from '@/components/ui/toast';
+import { AppShell } from '@/components/layout/app-shell';
 
 /**
  * Amorce l'application côté navigateur.
@@ -39,7 +40,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <MotionProvider>
       <ToastProvider>
         <div data-app-ready={ready} className="min-h-dvh">
-          {children}
+          <AppShell>{children}</AppShell>
         </div>
       </ToastProvider>
     </MotionProvider>
