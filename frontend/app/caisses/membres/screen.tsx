@@ -6,7 +6,7 @@ import { Plus, Search, Users } from 'lucide-react';
 import { AppHeader } from '@/components/layout/app-header';
 import { MemberRow } from '@/components/membre/member-row';
 import { Card } from '@/components/ui/card';
-import { buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { FixedAction } from '@/components/ui/fixed-action';
 import { EmptyState, SkeletonList } from '@/components/ui/states';
 import { StaggerItem, StaggerList } from '@/components/ui/motion';
@@ -80,6 +80,21 @@ function MembresListe({ id }: { id: string }) {
                   Commencer par ajouter <strong>les premiers membres</strong> de{' '}
                   <strong>votre caisse</strong>.
                 </>
+              )
+            }
+            action={
+              query ? (
+                <Button variant="outline" onClick={() => setQuery('')}>
+                  Effacer la recherche
+                </Button>
+              ) : (
+                <Link
+                  href={routes.nouveauMembre(id)}
+                  className={buttonVariants({ variant: 'primary' })}
+                >
+                  <Plus className="size-5" aria-hidden />
+                  Ajouter un membre
+                </Link>
               )
             }
           />

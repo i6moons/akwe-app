@@ -28,7 +28,7 @@ export function OperationRow({
       <span
         className={cn(
           'flex size-11 shrink-0 items-center justify-center rounded-full',
-          isIn ? 'bg-accent-100 text-accent-600' : 'bg-danger-100 text-danger-500',
+          isIn ? 'bg-accent-100 text-accent-600' : 'bg-danger-50 text-danger-600',
         )}
         aria-hidden
       >
@@ -44,7 +44,7 @@ export function OperationRow({
       </div>
 
       <div className="shrink-0 text-right">
-        <p className={cn('font-bold', isIn ? 'text-accent-600' : 'text-danger-500')}>
+        <p className={cn('font-bold', isIn ? 'text-accent-600' : 'text-danger-600')}>
           {formatSigned(transaction.amount, direction)}
         </p>
         <div className="flex justify-end pt-1">

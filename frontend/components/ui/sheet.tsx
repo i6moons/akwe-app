@@ -73,7 +73,13 @@ export function Sheet({
     <AnimatePresence>
       {open ? (
         <div
-          className={cn('fixed inset-0 z-50 flex', side === 'right' ? 'justify-end' : 'items-end')}
+          className={cn(
+            'fixed inset-0 z-50 flex',
+            side === 'right'
+              ? 'justify-end'
+              : // Remonte du bas sur téléphone, se pose au centre sur grand écran.
+                'items-end sm:items-center sm:justify-center sm:p-4',
+          )}
         >
           <m.button
             type="button"

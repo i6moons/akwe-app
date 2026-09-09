@@ -64,4 +64,28 @@ export function StaggerItem({ children, className }: { children: ReactNode; clas
   );
 }
 
+/**
+ * Apparition au défilement des longues listes.
+ *
+ * Le glissement se fait sans passer par une opacité nulle : dans un registre de
+ * comptes, une ligne ne doit jamais dépendre du déclenchement d'un observateur
+ * pour être lisible. Si l'animation ne part pas, tout reste visible.
+ *
+ * `once` : une section déjà vue ne rejoue pas son entrée quand on remonte,
+ * sinon la page tressaute sous le pouce.
+ */
+export function Reveal({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <m.div
+      initial={{ y: 10 }}
+      whileInView={{ y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+      className={className}
+    >
+      {children}
+    </m.div>
+  );
+}
+
 export { m };

@@ -17,7 +17,7 @@ const buttonVariants = cva(
         outline: 'border-2 border-brand-800 bg-transparent text-brand-800 hover:bg-brand-100/40',
         outlineLight: 'border-2 border-white/30 bg-transparent text-white hover:bg-white/10',
         ghost: 'bg-transparent text-brand-800 hover:bg-brand-100/40',
-        danger: 'bg-danger-500 text-white hover:bg-danger-500/90',
+        danger: 'bg-danger-600 text-white hover:bg-danger-600/90',
       },
       size: {
         // 48px minimum : zone tactile imposée par le .cursorrules.

@@ -3,9 +3,13 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { Info, User } from 'lucide-react';
 import { Card, CardTitle } from '@/components/ui/card';
+import { StatusToggle } from '@/components/membre/status-toggle';
+import { useToast } from '@/components/ui/toast';
+import { useFormErrors } from '@/lib/hooks/use-form-errors';
 import { Button } from '@/components/ui/button';
 import { FixedAction } from '@/components/ui/fixed-action';
-import { BareInput, Field, IconField, Input } from '@/components/ui/field';
+import { Field, FieldError } from '@/components/ui/field';
+import { BareInput, IconField, Input } from '@/components/ui/input';
 import { formatPhone, toDateInput } from '@/lib/format';
 
 export interface MemberFormValues {
@@ -33,17 +37,18 @@ export function MemberForm({
   const [phone, setPhone] = useState(initial?.phone ? formatPhone(initial.phone) : '');
   const [joinedAt, setJoinedAt] = useState(toDateInput(initial?.joinedAt ?? new Date()));
   const [isActive, setIsActive] = useState(initial?.isActive ?? true);
-  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const notify = useToast();
+
+  const form = useFormErrors({
+    fullName: () => (fullName.trim().length < 2 ? 'Entrez le nom complet du membre.' : null),
+  });
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    if (fullName.trim().length < 2) {
-      setError('Entrez le nom complet du membre.');
-      return;
-    }
+    if (!form.valider()) return;
+
     setSaving(true);
-    setError(null);
     try {
       await onSubmit({
         fullName: fullName.trim(),
@@ -51,8 +56,11 @@ export function MemberForm({
         joinedAt,
         isActive,
       });
+      notify('success', `${fullName.trim()} enregistré`);
     } catch {
-      setError("L'enregistrement a échoué. Réessayez.");
+      const message = "L'enregistrement a échoué. Réessayez.";
+      form.setFormError(message);
+      notify('error', message);
       setSaving(false);
     }
   }
@@ -62,12 +70,16 @@ export function MemberForm({
       <Card className="space-y-5">
         <CardTitle className="text-base">Informations</CardTitle>
 
-        <Field label="Nom complet" htmlFor="nom-membre" required error={error}>
+        <Field label="Nom complet" htmlFor="nom-membre" required error={form.error('fullName')}>
           <IconField icon={<User className="size-5" aria-hidden />}>
             <BareInput
               id="nom-membre"
               value={fullName}
-              onChange={(event) => setFullName(event.target.value)}
+              onChange={(event) => {
+                setFullName(event.target.value);
+                form.effacer('fullName');
+              }}
+              onBlur={form.blur('fullName')}
               placeholder="Exemple: Josué DADJO"
               autoComplete="name"
             />
@@ -105,6 +117,8 @@ export function MemberForm({
         </Field>
 
         {showStatus ? <StatusToggle value={isActive} onChange={setIsActive} /> : null}
+
+        <FieldError message={form.formError} />
       </Card>
 
       <FixedAction>
@@ -114,27 +128,5 @@ export function MemberForm({
         </Button>
       </FixedAction>
     </form>
-  );
-}
-
-function StatusToggle({ value, onChange }: { value: boolean; onChange: (next: boolean) => void }) {
-  return (
-    <div className="border-accent-500 flex gap-1 rounded-full border p-1" role="group">
-      {[true, false].map((state) => (
-        <button
-          key={String(state)}
-          type="button"
-          aria-pressed={value === state}
-          onClick={() => onChange(state)}
-          className={
-            value === state
-              ? 'bg-accent-500 text-brand-950 min-h-touch flex-1 rounded-full font-semibold'
-              : 'text-brand-700 min-h-touch flex-1 rounded-full font-semibold'
-          }
-        >
-          {state ? '✓ Actif' : 'Inactif'}
-        </button>
-      ))}
-    </div>
   );
 }

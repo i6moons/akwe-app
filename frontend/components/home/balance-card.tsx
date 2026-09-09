@@ -61,7 +61,7 @@ export function BalanceCard({ total, monthDelta }: { total?: number; monthDelta?
       ) : (
         // `pr-24` réserve la place de l'illustration : le montant ne passe
         // jamais dessous, même à sept chiffres.
-        <p className="font-display text-brand-800 relative pt-2 pr-20 text-2xl">
+        <p className="text-brand-800 relative pt-2 pr-20 text-3xl font-bold tracking-tight">
           {visible ? formatMoneyLong(total) : '•••••• FCFA'}
         </p>
       )}

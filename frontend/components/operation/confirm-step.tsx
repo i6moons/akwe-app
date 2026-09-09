@@ -9,6 +9,9 @@ import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { FixedAction } from '@/components/ui/fixed-action';
 import { Card } from '@/components/ui/card';
+import { FieldError } from '@/components/ui/field';
+import { useToast } from '@/components/ui/toast';
+import { formatMoney } from '@/lib/format';
 import { createTransaction } from '@/lib/db/repository';
 import { clearDraft } from '@/lib/operations/draft-store';
 import { formatDateLong } from '@/lib/format';
@@ -26,6 +29,7 @@ export function ConfirmStep({
 }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const notify = useToast();
 
   async function handleValidate(): Promise<void> {
     setSaving(true);
@@ -35,9 +39,15 @@ export function ConfirmStep({
       // que le réseau soit là ou non.
       const transaction = await createTransaction(draft);
       clearDraft();
+      notify(
+        'success',
+        draft.amount === null ? 'Opération enregistrée' : `${formatMoney(draft.amount)} enregistré`,
+      );
       onSaved(transaction);
     } catch {
-      setError("L'opération n'a pas pu être enregistrée. Réessayez.");
+      const message = "L'opération n'a pas pu être enregistrée. Réessayez.";
+      setError(message);
+      notify('error', message);
       setSaving(false);
     }
   }
@@ -61,11 +71,7 @@ export function ConfirmStep({
           <DraftSummary draft={draft} />
           <OfflineNotice />
 
-          {error ? (
-            <p role="alert" className="text-danger-500 text-sm font-medium">
-              {error}
-            </p>
-          ) : null}
+          <FieldError message={error} />
         </Card>
       </div>
 

@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { m } from '@/components/ui/motion';
 
 /**
@@ -11,6 +13,14 @@ import { m } from '@/components/ui/motion';
  * téléphones d'entrée de gamme que visent nos utilisatrices.
  */
 export default function Template({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
+  // Sans cela, on arrive au milieu d'un écran neuf après avoir fait défiler le
+  // précédent. Instantané et non « smooth » : le fondu masque déjà le saut.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [pathname]);
+
   return (
     <m.div
       initial={{ opacity: 0 }}

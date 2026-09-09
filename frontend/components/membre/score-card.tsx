@@ -42,7 +42,7 @@ export function ScoreCard({ score, onExport }: { score: CreditScore; onExport?: 
             x="64"
             y="60"
             textAnchor="middle"
-            className="fill-brand-800 font-display"
+            className="fill-brand-800 font-bold"
             fontSize="30"
             fontWeight="700"
           >

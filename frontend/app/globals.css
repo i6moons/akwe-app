@@ -23,8 +23,12 @@
   --color-line: #c4d2d1;
   --color-muted: #99b3b2;
 
-  --color-danger-500: #ff6b6b;
+  --color-danger-500: #ff6b6b; /* accents décoratifs, repris des maquettes */
+  /* Le rouge des maquettes tombe à 2,5:1 sur une carte claire. Cette version
+     foncée passe à 5,2:1 : elle porte le texte d'erreur et les boutons destructifs. */
+  --color-danger-600: #c62828;
   --color-danger-100: #f6d0d0;
+  --color-danger-50: #fdecec; /* fond des pastilles « sortie » et « en attente » */
   --color-warn-100: #fbf3d6;
   --color-warn-500: #d4a017;
 
@@ -113,6 +117,22 @@
   /* Empêche le zoom automatique iOS sur les champs (<16px). */
   .text-field {
     font-size: max(1rem, 16px);
+  }
+
+  /* Champ date : on affiche déjà une icône de calendrier à gauche. On étale le
+     déclencheur natif, invisible, sur tout le champ — appuyer n'importe où
+     ouvre le sélecteur, au lieu de viser une cible de 20 px. */
+  input[type='date']::-webkit-calendar-picker-indicator {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    height: auto;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  input[type='date'] {
+    position: relative;
   }
 
   .safe-bottom {

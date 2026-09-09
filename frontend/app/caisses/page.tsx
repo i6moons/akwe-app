@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Plus, Search, Wallet } from 'lucide-react';
 import { AppHeader } from '@/components/layout/app-header';
 import { GroupRow } from '@/components/caisse/group-row';
-import { buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { FixedAction } from '@/components/ui/fixed-action';
 import { EmptyState, SkeletonList } from '@/components/ui/states';
 import { StaggerItem, StaggerList } from '@/components/ui/motion';
@@ -63,6 +63,21 @@ export default function CaissesPage() {
               query
                 ? 'Vérifiez le nom que vous avez tapé.'
                 : 'Commencez par créer votre première caisse.'
+            }
+            action={
+              query ? (
+                <Button variant="outline" onClick={() => setQuery('')}>
+                  Effacer la recherche
+                </Button>
+              ) : (
+                <Link
+                  href={routes.nouvelleCaisse}
+                  className={buttonVariants({ variant: 'primary' })}
+                >
+                  <Plus className="size-5" aria-hidden />
+                  Créer une caisse
+                </Link>
+              )
             }
           />
         ) : (

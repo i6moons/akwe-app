@@ -76,6 +76,24 @@ une 3G. `MotionConfig reducedMotion="user"` respecte le réglage système.
 Rien qui bouge en boucle ne doit déplacer une cible tactile : sur l'écran
 d'ouverture, c'est un halo qui pulse derrière le bouton, pas le bouton.
 
+## Retours à l'utilisatrice
+
+Une action qui ne dit rien laisse croire qu'elle a échoué, et on la refait.
+
+- **Champs** : `ui/field.tsx` relie le message d'erreur à son champ
+  (`aria-describedby`, `aria-invalid`) et le déplie en 150 ms. La validation se
+  déclenche à la sortie du champ, pas seulement à l'envoi : `useFormErrors`.
+- **Actions** : `ui/toast.tsx` confirme les enregistrements et signale les
+  échecs. Trois messages visibles au maximum, les suivants attendent.
+- **Actions destructives** : `ui/confirm-dialog.tsx`, jamais `window.confirm`.
+- **Chargement** : squelette pour une page, rouet dans le bouton pour une action
+  courte (`loading` sur `Button`, sans changement de largeur).
+- **Listes vides** : `EmptyState` porte toujours un bouton qui débloque.
+
+Le rouge des maquettes (`danger-500`) ne dépasse pas 2,5:1 sur une carte claire.
+Les textes d'erreur et les boutons destructifs utilisent `danger-600`, la même
+famille en plus foncé, à 5,2:1.
+
 ## Organisation
 
 ```

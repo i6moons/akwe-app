@@ -23,7 +23,7 @@ export function GroupRow({
   return (
     <Link
       href={routes.caisse(group.id)}
-      className="bg-surface rounded-card flex items-center gap-3 p-4"
+      className="bg-surface rounded-card flex items-center gap-3 p-4 transition-all duration-200 ease-out hover:shadow-md active:scale-[0.99]"
     >
       <span className="bg-brand-600 flex size-12 shrink-0 items-center justify-center rounded-full text-white">
         <Users className="size-6" aria-hidden />

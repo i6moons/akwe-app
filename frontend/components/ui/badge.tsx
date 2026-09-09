@@ -10,8 +10,8 @@ const badgeVariants = cva(
       tone: {
         active: 'bg-accent-500 text-brand-950',
         synced: 'bg-accent-100 text-brand-600',
-        pending: 'bg-danger-100 text-danger-500',
-        failed: 'bg-danger-100 text-danger-500',
+        pending: 'bg-danger-50 text-danger-600',
+        failed: 'bg-danger-50 text-danger-600',
         neutral: 'bg-surface-2 text-brand-700',
       },
     },

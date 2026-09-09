@@ -34,7 +34,7 @@ export function HistorySummary({
           {group.location} · cotisation par {FREQUENCY_LABELS[group.frequency]}
         </p>
         <p className="pt-3 text-sm text-white/80">Solde de la caisse</p>
-        <p className="font-display text-accent-500 text-2xl font-bold">
+        <p className="text-accent-500 text-2xl font-bold tracking-tight">
           {formatMoneyLong(balanceOf(transactions))}
         </p>
       </div>

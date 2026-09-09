@@ -7,8 +7,11 @@ import { AppHeader } from '@/components/layout/app-header';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FixedAction } from '@/components/ui/fixed-action';
-import { Field, Input, Select } from '@/components/ui/field';
+import { Field, FieldError } from '@/components/ui/field';
+import { Input, Select } from '@/components/ui/input';
 import { OfflineNotice } from '@/components/layout/offline-notice';
+import { useToast } from '@/components/ui/toast';
+import { useFormErrors } from '@/lib/hooks/use-form-errors';
 import { createGroup } from '@/lib/db/repository';
 import { parseAmount } from '@/lib/format';
 import { FREQUENCY_LABELS, type Frequency } from '@/lib/types';
@@ -17,22 +20,23 @@ import { routes } from '@/lib/routes';
 /** Maquette « iPhone 17 - 6 » — création d'une caisse. */
 export default function NouvelleCaissePage() {
   const router = useRouter();
+  const notify = useToast();
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [frequency, setFrequency] = useState<Frequency>('monthly');
   const [location, setLocation] = useState('');
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+
+  const form = useFormErrors({
+    name: () => (name.trim().length < 3 ? 'Donnez un nom à votre caisse.' : null),
+    amount: () =>
+      parseAmount(amount) === null ? 'Entrez un montant en FCFA, par exemple 2000.' : null,
+  });
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     const contribution = parseAmount(amount);
-    const nextErrors: Record<string, string> = {};
-    if (name.trim().length < 3) nextErrors.name = 'Donnez un nom à votre caisse.';
-    if (contribution === null) nextErrors.amount = 'Entrez un montant en FCFA, par exemple 2000.';
-
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0 || contribution === null) return;
+    if (!form.valider() || contribution === null) return;
 
     setSaving(true);
     try {
@@ -42,9 +46,12 @@ export default function NouvelleCaissePage() {
         frequency,
         location: location.trim() || 'Non précisé',
       });
+      notify('success', `Caisse « ${group.name} » créée`);
       router.replace(routes.membres(group.id));
     } catch {
-      setErrors({ form: "La caisse n'a pas pu être enregistrée. Réessayez." });
+      const message = "La caisse n'a pas pu être enregistrée. Réessayez.";
+      form.setFormError(message);
+      notify('error', message);
       setSaving(false);
     }
   }
@@ -57,22 +64,35 @@ export default function NouvelleCaissePage() {
         <Card className="space-y-5">
           <CardTitle className="text-base">Informations</CardTitle>
 
-          <Field label="Nom de la caisse" htmlFor="nom" required error={errors.name}>
+          <Field label="Nom de la caisse" htmlFor="nom" required error={form.error('name')}>
             <Input
               id="nom"
               value={name}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) => {
+                setName(event.target.value);
+                form.effacer('name');
+              }}
+              onBlur={form.blur('name')}
               placeholder="Exemple : Tontine voyage yèmi"
               autoComplete="off"
             />
           </Field>
 
-          <Field label="Montant de la cotisation" htmlFor="montant" required error={errors.amount}>
+          <Field
+            label="Montant de la cotisation"
+            htmlFor="montant"
+            required
+            error={form.error('amount')}
+          >
             <Input
               id="montant"
               inputMode="numeric"
               value={amount}
-              onChange={(event) => setAmount(event.target.value)}
+              onChange={(event) => {
+                setAmount(event.target.value);
+                form.effacer('amount');
+              }}
+              onBlur={form.blur('amount')}
               placeholder="Exemple : 2000"
             />
           </Field>
@@ -102,12 +122,7 @@ export default function NouvelleCaissePage() {
           </Field>
 
           <OfflineNotice />
-
-          {errors.form ? (
-            <p role="alert" className="text-danger-500 text-sm font-medium">
-              {errors.form}
-            </p>
-          ) : null}
+          <FieldError message={form.formError} />
         </Card>
 
         <FixedAction>
