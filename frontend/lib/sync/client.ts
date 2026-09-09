@@ -1,5 +1,6 @@
 import type { OutboxEntry } from '@/lib/db/schema';
 import { apiUrl } from '@/lib/api';
+import { jetonDAcces } from '@/lib/auth/token';
 
 /**
  * Transport de la file d'attente vers le backend.
@@ -11,7 +12,10 @@ import { apiUrl } from '@/lib/api';
 export async function sendBatch(entries: readonly OutboxEntry[]): Promise<{ confirmed: string[] }> {
   const response = await fetch(apiUrl('/api/sync'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${jetonDAcces()}`,
+    },
     body: JSON.stringify({
       batch: entries.map((entry) => ({
         client_uuid: entry.clientUuid,
