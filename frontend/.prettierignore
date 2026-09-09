@@ -1,0 +1,11 @@
+.next
+node_modules
+coverage
+playwright-report
+test-results
+captures
+package-lock.json
+*.md
+
+# Genere par scripts/build-sw.mjs — la source est scripts/sw-template.js
+public/sw.js
