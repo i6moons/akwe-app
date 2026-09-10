@@ -1,5 +1,8 @@
+import { detectType } from '@/lib/voice/keywords';
 import { normalize, parseFrenchAmount } from '@/lib/voice/french-numbers';
-import type { Member, OperationDraft, TransactionType } from '@/lib/types';
+import type { Member, OperationDraft } from '@/lib/types';
+
+export { detectType };
 
 /**
  * Extraction locale d'une transaction à partir d'une phrase dictée.
@@ -7,14 +10,6 @@ import type { Member, OperationDraft, TransactionType } from '@/lib/types';
  * Sert de repli quand l'API LLM est injoignable ou saturée — ce qui, en 3G
  * béninoise un jour de démo, n'est pas une hypothèse théorique.
  */
-
-const TYPE_KEYWORDS: readonly (readonly [TransactionType, readonly string[]])[] = [
-  ['repayment', ['rembourse', 'remboursement', 'a rendu', 'rendu largent']],
-  ['loan', ['pret', 'prete', 'emprunt', 'a emprunte']],
-  ['payout', ['versement', 'a recu', 'retrait', 'a retire', 'j ai donne a', 'son tour']],
-  ['fee', ['frais', 'amende', 'penalite', 'depense']],
-  ['contribution', ['verse', 'cotise', 'cotisation', 'a donne', 'a paye', 'apporte']],
-];
 
 /**
  * Mots que Chrome pose souvent dans une dictée, et qui ne sont jamais un prénom.
@@ -169,32 +164,23 @@ export function pickBestTranscript(
   }));
 
   let winner = nonempty[0]!;
-  let winnerDistance = Number.POSITIVE_INFINITY;
+  let winnerScore = Number.NEGATIVE_INFINITY;
 
   for (const alternative of nonempty) {
     const member = matchMember(alternative, members);
-    if (!member) continue;
-
-    const part = normalize(member.fullName).split(' ')[0] ?? '';
-    const distance = Math.min(
-      ...nameTokens(alternative).map((word) => editDistance(part, word)),
-      Number.POSITIVE_INFINITY,
-    );
-    if (distance < winnerDistance) {
+    const amount = parseFrenchAmount(alternative);
+    const type = detectType(alternative);
+    let score = 0;
+    if (member) score += 3;
+    if (amount !== null) score += 2;
+    if (type) score += 2;
+    if (score > winnerScore) {
       winner = alternative;
-      winnerDistance = distance;
+      winnerScore = score;
     }
   }
 
   return winner;
-}
-
-export function detectType(transcript: string): TransactionType | null {
-  const text = normalize(transcript);
-  for (const [type, keywords] of TYPE_KEYWORDS) {
-    if (keywords.some((keyword) => text.includes(keyword))) return type;
-  }
-  return null;
 }
 
 /** « aujourd'hui », « hier », « avant-hier ». Sinon, la date du jour. */

@@ -26,6 +26,24 @@ export const OPERATION_TYPES: readonly OperationTypeMeta[] = [
   { type: 'fee', label: 'Frais', direction: 'out' },
 ] as const;
 
+/**
+ * Les cinq types sous forme de liste — source unique de toute validation.
+ *
+ * Cette liste vivait recopiée dans `lib/sync/validate.ts` et `lib/voice/schema.ts`,
+ * et les copies avaient divergé : celle de la dictée n'en connaissait que trois,
+ * si bien qu'un « a remboursé » ou des « frais » y devenaient `unknown`. C'est la
+ * même divergence qui, côté base, avait fait échouer des lots entiers (voir
+ * `backend/supabase/migrations/0004_colonnes_manquantes.sql`). Une seule liste,
+ * dérivée de `OPERATION_TYPES`, ferme la question.
+ */
+export const TRANSACTION_TYPES: readonly TransactionType[] = OPERATION_TYPES.map(
+  (meta) => meta.type,
+);
+
+export function isTransactionType(value: unknown): value is TransactionType {
+  return typeof value === 'string' && TRANSACTION_TYPES.includes(value as TransactionType);
+}
+
 export function operationMeta(type: TransactionType): OperationTypeMeta {
   return OPERATION_TYPES.find((meta) => meta.type === type) ?? OPERATION_TYPES[0]!;
 }

@@ -1,4 +1,5 @@
 import { parseAmount } from '@/lib/format';
+import { TRANSACTION_TYPES, isTransactionType, type TransactionType } from '@/lib/types';
 
 export const MAX_SYNC_BATCH = 200;
 
@@ -7,9 +8,12 @@ export const MAX_SYNC_BATCH = 200;
  * de la table accepte. En omettre revenait à rejeter des opérations parfaitement
  * valides : la reconnaissance vocale détecte « a remboursé » et « frais », et la
  * trésorière aurait vu ces saisies rester indéfiniment « en attente ».
+ *
+ * La liste n'est plus recopiée ici : elle vient de `lib/types.ts`, seul endroit
+ * qui la définisse désormais.
  */
-export const ALLOWED_TYPES = ['contribution', 'payout', 'loan', 'repayment', 'fee'] as const;
-export type AllowedSyncType = (typeof ALLOWED_TYPES)[number];
+export const ALLOWED_TYPES = TRANSACTION_TYPES;
+export type AllowedSyncType = TransactionType;
 
 export interface SyncContext {
   ownedGroupIds: ReadonlySet<string>;
@@ -129,7 +133,7 @@ export function validateOperation(
     };
   }
 
-  if (typeof raw.type !== 'string' || !(ALLOWED_TYPES as readonly string[]).includes(raw.type)) {
+  if (!isTransactionType(raw.type)) {
     return {
       client_uuid,
       reason: `type non autorisé (${String(raw.type)}) — à abandonner`,

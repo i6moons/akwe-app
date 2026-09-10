@@ -9,3 +9,6 @@ package-lock.json
 
 # Genere par scripts/build-sw.mjs — la source est scripts/sw-template.js
 public/sw.js
+
+# Généré par Next à chaque `dev` ou `build` — jamais dans le dépôt.
+next-env.d.ts

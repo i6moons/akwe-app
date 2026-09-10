@@ -54,7 +54,10 @@ function CaisseDetail({ id }: { id: string }) {
 
   return (
     <main className="safe-bottom min-h-dvh space-y-4 pb-8">
-      <AppHeader title={group.name} subtitle="Ici se trouve les informations liés à votre caisse" />
+      <AppHeader
+        title={group.name}
+        subtitle="Ici se trouvent les informations liées à votre caisse"
+      />
 
       <div className="space-y-4 px-4 lg:grid lg:grid-cols-5 lg:items-start lg:gap-4 lg:space-y-0">
         <div className="space-y-4 lg:col-span-3">

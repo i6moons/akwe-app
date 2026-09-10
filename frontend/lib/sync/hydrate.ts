@@ -1,6 +1,6 @@
 'use client';
 
-import { apiUrl } from '@/lib/api';
+import { apiUrl, fetchAvecDelai } from '@/lib/api';
 import { jetonDAcces } from '@/lib/auth/token';
 import { getDb } from '@/lib/db/schema';
 import type { Frequency, Group, Member, Transaction, TransactionType } from '@/lib/types';
@@ -79,7 +79,9 @@ function lignes(valeur: unknown[] | undefined): Record<string, unknown>[] {
 export async function hydrater(): Promise<number | null> {
   let donnees: Reponse;
   try {
-    const reponse = await fetch(apiUrl('/api/sync'), {
+    // Avec échéance : au premier lancement, l'écran attend ce rappel avant
+    // d'afficher le carnet. Sans délai, un réseau muet le laissait attendre.
+    const reponse = await fetchAvecDelai(apiUrl('/api/sync'), {
       headers: { Authorization: `Bearer ${await jetonDAcces()}` },
       cache: 'no-store',
     });

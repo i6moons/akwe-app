@@ -1,5 +1,5 @@
 import type { OutboxEntry } from '@/lib/db/schema';
-import { apiUrl } from '@/lib/api';
+import { apiUrl, fetchAvecDelai } from '@/lib/api';
 import { jetonDAcces } from '@/lib/auth/token';
 
 /** Opération que le serveur a explicitement refusée, et pourquoi. */
@@ -23,9 +23,14 @@ export interface ReponseSync {
  * Ce motif était produit avec soin côté serveur puis jeté ici : seul `confirmed`
  * était désérialisé. Une cotisation d'un type que la base n'admet pas restait
  * donc « en attente » indéfiniment, sans que rien n'explique pourquoi.
+ *
+ * L'envoi porte une échéance : `lib/sync/outbox.ts` garde la promesse du vidage
+ * en cours pour n'en exécuter qu'un à la fois, et une requête sans délai la
+ * laissait pendante à jamais. Toute synchronisation ultérieure recevait alors
+ * cette même promesse morte, et la file restait bloquée jusqu'au rechargement.
  */
 export async function sendBatch(entries: readonly OutboxEntry[]): Promise<ReponseSync> {
-  const response = await fetch(apiUrl('/api/sync'), {
+  const response = await fetchAvecDelai(apiUrl('/api/sync'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

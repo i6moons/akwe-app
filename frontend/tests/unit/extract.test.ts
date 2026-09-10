@@ -70,6 +70,13 @@ describe('detectType', () => {
     expect(detectType('on a payé des frais de réunion')).toBe('fee');
   });
 
+  it('reconnaît les mots-clés même déformés par Chrome', () => {
+    expect(detectType('Adjovi a donné dix mille francs')).toBe('contribution');
+    expect(detectType('Kossi a verser deux mille')).toBe('contribution');
+    expect(detectType('elle va cotiser demain')).toBe('contribution');
+    expect(detectType('Adjovi a cotisé')).toBe('contribution');
+  });
+
   it('renvoie null quand la phrase ne dit rien du type', () => {
     expect(detectType('deux mille francs')).toBeNull();
   });

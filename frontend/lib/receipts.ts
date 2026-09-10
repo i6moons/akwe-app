@@ -6,7 +6,19 @@
  * l'enregistrement d'une cotisation.
  */
 
+import { fetchAvecDelai } from '@/lib/api';
+
 export const MAX_RECEIPT_ATTEMPTS = 3;
+
+/**
+ * 8 s par fournisseur, comme l'appel au modèle vocal (`MODEL_TIMEOUT_MS`).
+ *
+ * Le reçu est un accusé, jamais une étape de l'enregistrement : `deliverReceipt`
+ * tente WhatsApp puis SMS l'un après l'autre. Sans échéance, un fournisseur muet
+ * gardait la fonction serverless ouverte jusqu'au plafond de la plateforme, et
+ * le second canal n'était même pas essayé.
+ */
+const PROVIDER_TIMEOUT_MS = 8_000;
 
 export type ReceiptChannel = 'whatsapp' | 'sms';
 export type ReceiptStatus = 'pending' | 'sent' | 'failed';
@@ -125,19 +137,23 @@ async function postWhatsApp(
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim();
   if (!token || !phoneNumberId) return { error: 'WhatsApp non configuré' };
 
-  const response = await fetch(`https://graph.facebook.com/v19.0/${phoneNumberId}/messages`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
+  const response = await fetchAvecDelai(
+    `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: phone.replace(/\D/g, ''),
+        type: 'text',
+        text: { body: text },
+      }),
     },
-    body: JSON.stringify({
-      messaging_product: 'whatsapp',
-      to: phone.replace(/\D/g, ''),
-      type: 'text',
-      text: { body: text },
-    }),
-  });
+    PROVIDER_TIMEOUT_MS,
+  );
 
   if (!response.ok) {
     return { error: `WhatsApp ${response.status}` };
@@ -152,14 +168,18 @@ async function postSms(phone: string, text: string): Promise<{ id: string } | { 
   const key = process.env.SMS_API_KEY?.trim();
   if (!url) return { error: 'SMS non configuré' };
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(key ? { Authorization: `Bearer ${key}` } : {}),
+  const response = await fetchAvecDelai(
+    url,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(key ? { Authorization: `Bearer ${key}` } : {}),
+      },
+      body: JSON.stringify({ to: phone.replace(/\D/g, ''), text }),
     },
-    body: JSON.stringify({ to: phone.replace(/\D/g, ''), text }),
-  });
+    PROVIDER_TIMEOUT_MS,
+  );
 
   if (!response.ok) return { error: `SMS ${response.status}` };
   const body = (await response.json()) as { id?: string; message_id?: string };
