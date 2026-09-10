@@ -23,11 +23,69 @@ interface SpeechRecognitionLike {
   continuous: boolean;
   interimResults: boolean;
   maxAlternatives: number;
+  grammars?: unknown;
   start: () => void;
   stop: () => void;
   onresult: ((event: { results: ArrayLike<SpeechResult> }) => void) | null;
   onerror: ((event: { error: string }) => void) | null;
   onend: (() => void) | null;
+}
+
+type GrammarListCtor = new () => { addFromString: (grammar: string, weight?: number) => void };
+
+function getGrammarListCtor(): GrammarListCtor | null {
+  if (typeof window === 'undefined') return null;
+  const scope = window as unknown as {
+    SpeechGrammarList?: GrammarListCtor;
+    webkitSpeechGrammarList?: GrammarListCtor;
+  };
+  return scope.SpeechGrammarList ?? scope.webkitSpeechGrammarList ?? null;
+}
+
+function applyLexicon(recognition: SpeechRecognitionLike, hints: readonly string[]): void {
+  const Ctor = getGrammarListCtor();
+  if (!Ctor || hints.length === 0) return;
+  const words = [
+    ...new Set(
+      hints
+        .flatMap((hint) => hint.split(/[\s|]+/))
+        .map((word) => word.replace(/[^a-zA-ZÀ-ÿ]/g, ''))
+        .filter((word) => word.length >= 3),
+    ),
+  ];
+  if (words.length === 0) return;
+  try {
+    const list = new Ctor();
+    list.addFromString(`#JSGF V1.0; grammar akwe; public <mot> = ${words.join(' | ')};`, 1);
+    recognition.grammars = list;
+  } catch {
+    // Chrome ignore souvent la grammaire : la dictée continue sans.
+  }
+}
+
+function joinTranscripts(results: ArrayLike<SpeechResult>): {
+  text: string;
+  alternatives: string[];
+} {
+  const chunks: string[] = [];
+  for (let i = 0; i < results.length; i += 1) {
+    const piece = results[i]?.[0]?.transcript ?? '';
+    if (!piece) continue;
+    const previous = chunks.at(-1);
+    if (previous && !previous.endsWith(' ') && !piece.startsWith(' ')) chunks.push(' ');
+    chunks.push(piece);
+  }
+
+  const last = results[results.length - 1];
+  const alternatives: string[] = [];
+  if (last) {
+    for (let j = 0; j < last.length; j += 1) {
+      const piece = last[j]?.transcript?.trim();
+      if (piece) alternatives.push(piece);
+    }
+  }
+
+  return { text: chunks.join(''), alternatives };
 }
 
 type RecognitionCtor = new () => SpeechRecognitionLike;
@@ -52,6 +110,7 @@ export interface SpeechState {
 
 export function useSpeech(
   onFinal: (transcript: string, alternatives: string[]) => void,
+  hints: readonly string[] = [],
 ): SpeechState {
   const [status, setStatus] = useState<SpeechStatus>('idle');
   const [transcript, setTranscript] = useState('');
@@ -59,10 +118,15 @@ export function useSpeech(
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const finalRef = useRef(onFinal);
   const alternativesRef = useRef<string[]>([]);
+  const hintsRef = useRef(hints);
 
   useEffect(() => {
     finalRef.current = onFinal;
   }, [onFinal]);
+
+  useEffect(() => {
+    hintsRef.current = hints;
+  }, [hints]);
 
   useEffect(() => {
     const Ctor = getRecognitionCtor();
@@ -81,20 +145,8 @@ export function useSpeech(
     recognition.maxAlternatives = 5;
 
     recognition.onresult = (event) => {
-      let text = '';
-      for (let i = 0; i < event.results.length; i += 1) {
-        text += event.results[i]?.[0]?.transcript ?? '';
-      }
+      const { text, alternatives } = joinTranscripts(event.results);
       setTranscript(text);
-
-      const last = event.results[event.results.length - 1];
-      const alternatives: string[] = [];
-      if (last) {
-        for (let j = 0; j < last.length; j += 1) {
-          const piece = last[j]?.transcript?.trim();
-          if (piece) alternatives.push(piece);
-        }
-      }
       alternativesRef.current = alternatives;
     };
     recognition.onerror = (event) => {
@@ -116,6 +168,7 @@ export function useSpeech(
     if (!recognitionRef.current) return;
     setTranscript('');
     alternativesRef.current = [];
+    applyLexicon(recognitionRef.current, hintsRef.current);
     setStatus('listening');
     try {
       recognitionRef.current.start();

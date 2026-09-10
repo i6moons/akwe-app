@@ -12,6 +12,7 @@ import { Card, CardPanel, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/states';
 import { useGroup, useMembers } from '@/lib/hooks/use-akwe';
 import { extractDraft, pickBestTranscript } from '@/lib/voice/extract';
+import { speechHints } from '@/lib/voice/keywords';
 import { useSpeech } from '@/lib/voice/use-speech';
 import type { OperationDraft } from '@/lib/types';
 import { routes } from '@/lib/routes';
@@ -30,14 +31,17 @@ export function VoiceStep({
 
   const handleFinal = useCallback(
     (transcript: string, alternatives: string[] = []) => {
-      const names = (members ?? []).map((item) => item.fullName);
-      const heard = pickBestTranscript([transcript, ...alternatives], names);
-      setDraft(extractDraft(heard, groupId, members ?? []));
+      const list = members ?? [];
+      const heard = pickBestTranscript(
+        [transcript, ...alternatives],
+        list.map((item) => item.fullName),
+      );
+      setDraft(extractDraft(heard, groupId, list));
     },
     [groupId, members],
   );
 
-  const speech = useSpeech(handleFinal);
+  const speech = useSpeech(handleFinal, speechHints((members ?? []).map((item) => item.fullName)));
   const listening = speech.status === 'listening';
 
   return (
