@@ -8,7 +8,7 @@ import { getSession } from '@/lib/auth/session';
  * Lu après le montage : `localStorage` n'existe pas pendant le rendu serveur, et
  * lire pendant le rendu provoquerait une divergence d'hydratation.
  */
-export function useSessionName(fallback = 'Adjovi'): string {
+export function useSessionName(fallback = 'Trésorière'): string {
   const [name, setName] = useState(fallback);
 
   useEffect(() => {
