@@ -17,6 +17,9 @@ import { parseAmount } from '@/lib/format';
 import { FREQUENCY_LABELS, type Frequency } from '@/lib/types';
 import { routes } from '@/lib/routes';
 
+const CHAMP =
+  '!h-[43px] !min-h-[43px] !rounded-[6px] border border-brand-600 !bg-transparent';
+
 /** Maquette « iPhone 17 - 6 » — création d'une caisse. */
 export default function NouvelleCaissePage() {
   const router = useRouter();
@@ -62,12 +65,12 @@ export default function NouvelleCaissePage() {
 
       <form
         onSubmit={(event) => void handleSubmit(event)}
-        className="flex flex-1 flex-col px-4 lg:mx-auto lg:w-full lg:max-w-2xl"
+        className="flex flex-1 flex-col px-4 pt-10 lg:mx-auto lg:w-full lg:max-w-2xl"
       >
-        <Card className="space-y-5">
+        <Card className="space-y-6">
           <CardTitle className="text-base">Informations</CardTitle>
 
-          <Field label="Nom de la caisse" htmlFor="nom" required error={form.error('name')}>
+          <Field label="Nom de la caisse" htmlFor="nom" error={form.error('name')}>
             <Input
               id="nom"
               value={name}
@@ -76,8 +79,9 @@ export default function NouvelleCaissePage() {
                 form.effacer('name');
               }}
               onBlur={form.blur('name')}
-              placeholder="Exemple : Tontine voyage yèmi"
+              placeholder="Exemple : Tontine voyage yémèli"
               autoComplete="off"
+              className={CHAMP}
             />
           </Field>
 
@@ -97,6 +101,7 @@ export default function NouvelleCaissePage() {
               }}
               onBlur={form.blur('amount')}
               placeholder="Exemple : 2000"
+              className={CHAMP}
             />
           </Field>
 
@@ -105,6 +110,7 @@ export default function NouvelleCaissePage() {
               id="frequence"
               value={frequency}
               onChange={(event) => setFrequency(event.target.value as Frequency)}
+              className={CHAMP}
             >
               {(Object.keys(FREQUENCY_LABELS) as Frequency[]).map((value) => (
                 <option key={value} value={value}>
@@ -119,8 +125,9 @@ export default function NouvelleCaissePage() {
               id="lieu"
               value={location}
               onChange={(event) => setLocation(event.target.value)}
-              placeholder="Exemple : Calavi kpota"
+              placeholder="Exemple : calavi kpotà"
               autoComplete="off"
+              className={CHAMP}
             />
           </Field>
 

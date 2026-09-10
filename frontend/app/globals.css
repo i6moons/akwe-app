@@ -38,7 +38,7 @@
   --font-body: var(--font-body-family), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-body-family), ui-sans-serif, system-ui, sans-serif;
 
-  --radius-card: 1rem;
+  --radius-card: 8px;
   --radius-field: 0.625rem;
 
   /* Zone tactile minimale imposée par le .cursorrules. */
@@ -117,6 +117,18 @@
   /* Empêche le zoom automatique iOS sur les champs (<16px). */
   .text-field {
     font-size: max(1rem, 16px);
+  }
+
+  /* Chrome / Edge peignent un fond clair dès qu'ils remplissent un champ.
+     Sur les écrans verts, on le recouvre pour garder le fond de la page. */
+  .champ-sombre:-webkit-autofill,
+  .champ-sombre:-webkit-autofill:hover,
+  .champ-sombre:-webkit-autofill:focus,
+  .champ-sombre:-webkit-autofill:active {
+    -webkit-text-fill-color: #ffffff;
+    caret-color: #ffffff;
+    box-shadow: 0 0 0 1000px var(--color-brand-800) inset;
+    transition: background-color 9999s ease-out 0s;
   }
 
   /* Champ date : on affiche déjà une icône de calendrier à gauche. On étale le

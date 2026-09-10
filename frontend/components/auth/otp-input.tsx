@@ -59,7 +59,7 @@ export function OtpInput({
           onChange={(event) => setDigit(index, event.target.value.replace(/\D/g, '').slice(-1))}
           onKeyDown={(event) => handleKeyDown(index, event)}
           onPaste={handlePaste}
-          className="border-brand-500 focus:border-accent-500 h-14 w-12 rounded-xl border-2 bg-transparent text-center text-2xl font-semibold text-white outline-none"
+          className="champ-sombre border-brand-500 focus:border-accent-500 h-14 w-12 rounded-xl border-2 bg-transparent text-center text-2xl font-semibold text-white outline-none"
         />
       ))}
     </div>

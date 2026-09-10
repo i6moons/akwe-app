@@ -24,8 +24,8 @@ importers:
         specifier: ^4.0.8
         version: 4.4.5
       dexie-react-hooks:
-        specifier: ^1.1.7
-        version: 1.1.7(@types/react@19.1.0)(dexie@4.4.5)(react@19.1.0)
+        specifier: ^4.4.0
+        version: 4.4.0(dexie@4.4.5)(react@19.1.0)
       framer-motion:
         specifier: ^13.2.0
         version: 13.2.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -91,8 +91,8 @@ importers:
         specifier: ^15.5.25
         version: 15.5.25(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.9.3)
       eslint-config-prettier:
-        specifier: ^9.1.0
-        version: 9.1.2(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))
+        specifier: ^10.1.8
+        version: 10.1.8(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))
       fake-indexeddb:
         specifier: ^6.0.0
         version: 6.2.5
@@ -1662,11 +1662,10 @@ packages:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
     engines: {node: '>=8'}
 
-  dexie-react-hooks@1.1.7:
-    resolution: {integrity: sha512-Lwv5W0Hk+uOW3kGnsU9GZoR1er1B7WQ5DSdonoNG+focTNeJbHW6vi6nBoX534VKI3/uwHebYzSw1fwY6a7mTw==}
+  dexie-react-hooks@4.4.0:
+    resolution: {integrity: sha512-ObLXBS5+4BJU8vtSvBx6b9fY6zZYgniAtwxzjCHsUQadgbqYN6935X2/1TWw4Rf2N1aZV1io5/ziox4vKuxABA==}
     peerDependencies:
-      '@types/react': '>=16'
-      dexie: ^3.2 || ^4.0.1-alpha
+      dexie: '>=4.2.0-alpha.1 <5.0.0'
       react: '>=16'
 
   dexie@4.4.5:
@@ -1770,8 +1769,8 @@ packages:
       typescript:
         optional: true
 
-  eslint-config-prettier@9.1.2:
-    resolution: {integrity: sha512-iI1f+D2ViGn+uvv5HuHVUamg8ll4tN+JRHGc6IJi4TP9Kl976C57fzPXgseXNs8v0iA8aSJpHsTWjDb9QJamGQ==}
+  eslint-config-prettier@10.1.8:
+    resolution: {integrity: sha512-82GZUjRS0p/jganf6q1rEO25VSoHH0hKPCTrgillPjdI/3bgBhAE1QzHrHTizjpRvy6pGAvKjDJtk2pF9NDq8w==}
     hasBin: true
     peerDependencies:
       eslint: '>=7.0.0'
@@ -4609,9 +4608,8 @@ snapshots:
 
   detect-libc@2.1.2: {}
 
-  dexie-react-hooks@1.1.7(@types/react@19.1.0)(dexie@4.4.5)(react@19.1.0):
+  dexie-react-hooks@4.4.0(dexie@4.4.5)(react@19.1.0):
     dependencies:
-      '@types/react': 19.1.0
       dexie: 4.4.5
       react: 19.1.0
 
@@ -4814,7 +4812,7 @@ snapshots:
       - eslint-plugin-import-x
       - supports-color
 
-  eslint-config-prettier@9.1.2(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0)):
+  eslint-config-prettier@10.1.8(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0)):
     dependencies:
       eslint: 9.39.5(jiti@2.7.0)(supports-color@7.2.0)
 

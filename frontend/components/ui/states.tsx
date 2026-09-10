@@ -8,15 +8,17 @@ export function EmptyState({
   title,
   description,
   action,
+  className,
 }: {
   icon: ReactNode;
   title: string;
   description: ReactNode;
   /** Bouton ou lien qui débloque la situation. */
   action?: ReactNode;
+  className?: string;
 }) {
   return (
-    <Card className="flex flex-col items-center gap-3 px-6 py-10 text-center">
+    <Card className={cn('flex flex-col items-center gap-3 px-6 py-10 text-center', className)}>
       <span className="bg-surface-2 text-brand-600 flex size-20 items-center justify-center rounded-full">
         {icon}
       </span>

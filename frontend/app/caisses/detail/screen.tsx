@@ -81,7 +81,7 @@ function CaisseDetail({ id }: { id: string }) {
 
             <Link
               href={routes.membres(id)}
-              className="bg-brand-800 min-h-touch flex items-center justify-between rounded-xl px-4 font-semibold text-white"
+              className="bg-brand-800 min-h-touch flex items-center justify-between rounded-[8px] px-4 font-semibold text-white"
             >
               Membres ({summary?.memberCount ?? '—'})
               <ChevronRight className="size-5" aria-hidden />

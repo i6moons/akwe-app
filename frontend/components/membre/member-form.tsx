@@ -68,7 +68,7 @@ export function MemberForm({
   return (
     <form
       onSubmit={(event) => void handleSubmit(event)}
-      className="flex flex-1 flex-col px-4 lg:mx-auto lg:w-full lg:max-w-2xl"
+      className="flex flex-1 flex-col px-4 pt-10 lg:mx-auto lg:w-full lg:max-w-2xl"
     >
       <Card className="space-y-5">
         <CardTitle className="text-base">Informations</CardTitle>
