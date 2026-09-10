@@ -64,6 +64,20 @@ export function openSession(
   return session;
 }
 
+/**
+ * Remplace le seul jeton, en laissant le reste de la session intacte.
+ *
+ * Le jeton signé par Supabase expire au bout d'une heure. Celui capturé à la
+ * connexion était conservé tel quel : passé ce délai, chaque envoi repartait
+ * avec un jeton mort, se faisait refuser en 401 et consommait une tentative.
+ * Cinq saisies plus tard, l'opération était abandonnée sans un mot.
+ */
+export function rafraichirJeton(accessToken: string): void {
+  const session = getSession();
+  if (!session || session.accessToken === accessToken) return;
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...session, accessToken }));
+}
+
 export function closeSession(): void {
   window.localStorage.removeItem(STORAGE_KEY);
 }

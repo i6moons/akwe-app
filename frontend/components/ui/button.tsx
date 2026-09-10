@@ -49,7 +49,11 @@ export function Button({
   return (
     <button
       type={type}
-      disabled={disabled ?? loading}
+      // `||` et non `??` : un appelant qui passe `disabled={false}` avec
+      // `loading` neutralisait le rouet, puisque `false ?? loading` vaut
+      // `false`. C'est ce qui laissait « Valider » cliquable pendant
+      // l'enregistrement d'une cotisation, et permettait de la compter deux fois.
+      disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={cn(buttonVariants({ variant, size }), className)}
       {...props}

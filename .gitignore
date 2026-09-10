@@ -35,6 +35,9 @@ next-env.d.ts
 # Captures et rapports locaux
 captures/
 
+# Rapports d'audit et contexte projet : utiles en local, hors du dépôt
+.ai/
+
 # Genere par scripts/build-sw.mjs a chaque build
 frontend/public/sw.js
 

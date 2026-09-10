@@ -80,7 +80,7 @@ export async function hydrater(): Promise<number | null> {
   let donnees: Reponse;
   try {
     const reponse = await fetch(apiUrl('/api/sync'), {
-      headers: { Authorization: `Bearer ${jetonDAcces()}` },
+      headers: { Authorization: `Bearer ${await jetonDAcces()}` },
       cache: 'no-store',
     });
     if (!reponse.ok) return null;

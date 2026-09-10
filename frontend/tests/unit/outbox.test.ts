@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getDb } from '@/lib/db/schema';
 import { createTransaction, balanceOf } from '@/lib/db/repository';
-import { flushOutbox, pendingCount } from '@/lib/sync/outbox';
+import { flushOutbox, pendingCount, refusEnAttente } from '@/lib/sync/outbox';
 import type { OperationDraft } from '@/lib/types';
 
 /**
@@ -36,7 +36,7 @@ describe('deux synchronisations qui se chevauchent', () => {
     const envoi = async (entries: readonly { clientUuid: string }[]) => {
       appels += 1;
       await new Promise((resolve) => setTimeout(resolve, 20));
-      return { confirmed: entries.map((entry) => entry.clientUuid) };
+      return { confirmed: entries.map((entry) => entry.clientUuid), rejected: [] };
     };
 
     const [a, b] = await Promise.all([flushOutbox(envoi), flushOutbox(envoi)]);
@@ -58,6 +58,7 @@ describe('deux synchronisations qui se chevauchent', () => {
 
     const { sent } = await flushOutbox(async (entries) => ({
       confirmed: entries.map((entry) => entry.clientUuid),
+      rejected: [],
     }));
 
     expect(sent).toBe(1);
@@ -89,6 +90,7 @@ describe('flushOutbox', () => {
     await createTransaction(draft(2000));
     const send = vi.fn(async (entries: readonly { clientUuid: string }[]) => ({
       confirmed: entries.map((entry) => entry.clientUuid),
+      rejected: [],
     }));
 
     const outcome = await flushOutbox(send);
@@ -115,6 +117,7 @@ describe('flushOutbox', () => {
     await createTransaction(draft(2000));
     const send = vi.fn(async (entries: readonly { clientUuid: string }[]) => ({
       confirmed: entries.map((entry) => entry.clientUuid),
+      rejected: [],
     }));
 
     await flushOutbox(send);
@@ -131,6 +134,70 @@ describe('flushOutbox', () => {
 
     const uuids = (await getDb().transactions.toArray()).map((row) => row.clientUuid);
     expect(new Set(uuids).size).toBe(2);
+  });
+});
+
+describe('refus explicite du serveur', () => {
+  it('conserve le motif du serveur et le distingue d’une panne de réseau', async () => {
+    await createTransaction({ ...draft(2000), type: 'repayment' });
+    const db = getDb();
+    const entree = await db.outbox.toCollection().first();
+
+    const outcome = await flushOutbox(async (entries) => ({
+      confirmed: [],
+      rejected: entries.map((entry) => ({
+        clientUuid: entry.clientUuid,
+        reason: "ce type d'opération n'est pas accepté",
+      })),
+    }));
+
+    expect(outcome).toEqual({ sent: 0, failed: 1 });
+    const apres = await db.outbox.get(entree!.id!);
+    expect(apres?.lastError).toBe("ce type d'opération n'est pas accepté");
+    expect(apres?.refusedByServer).toBe(true);
+
+    // L'opération reste dans la file : elle n'a jamais atteint la base, et rien
+    // ne doit laisser croire le contraire.
+    expect(await pendingCount()).toBe(1);
+    expect(await refusEnAttente()).toEqual({
+      nombre: 1,
+      motif: "ce type d'opération n'est pas accepté",
+    });
+  });
+
+  it('ne signale aucun refus quand c’est le réseau qui a lâché', async () => {
+    await createTransaction(draft(2000));
+
+    await flushOutbox(async () => {
+      throw new Error('Réseau indisponible');
+    });
+
+    const entree = await getDb().outbox.toCollection().first();
+    expect(entree?.lastError).toBe('Réseau indisponible');
+    expect(entree?.refusedByServer).toBe(false);
+    expect(await refusEnAttente()).toBeNull();
+  });
+
+  it('confirme une partie du lot et laisse le reste avec son motif', async () => {
+    await createTransaction(draft(1000));
+    await createTransaction(draft(2000));
+    const db = getDb();
+    const [premiere, seconde] = await db.outbox.orderBy('createdAt').toArray();
+
+    const outcome = await flushOutbox(async () => ({
+      confirmed: [premiere!.clientUuid],
+      rejected: [{ clientUuid: seconde!.clientUuid, reason: 'la caisse est introuvable' }],
+    }));
+
+    expect(outcome).toEqual({ sent: 1, failed: 1 });
+    expect(await db.outbox.get(premiere!.id!)).toBeUndefined();
+    expect((await db.outbox.get(seconde!.id!))?.lastError).toBe('la caisse est introuvable');
+
+    // La confirmée est bien marquée, la refusée reste « en attente ».
+    const operations = await db.transactions.toArray();
+    const parUuid = new Map(operations.map((row) => [row.clientUuid, row.syncStatus]));
+    expect(parUuid.get(premiere!.clientUuid)).toBe('synced');
+    expect(parUuid.get(seconde!.clientUuid)).not.toBe('synced');
   });
 });
 

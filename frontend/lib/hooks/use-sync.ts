@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { flushOutbox, pendingCount } from '@/lib/sync/outbox';
+import { flushOutbox, pendingCount, refusEnAttente, type RefusEnAttente } from '@/lib/sync/outbox';
 import { sendBatch } from '@/lib/sync/client';
 import { useOnline } from '@/lib/hooks/use-online';
 import { useToast } from '@/components/ui/toast';
@@ -12,6 +12,11 @@ export interface SyncState {
   /** Nombre d'opérations enregistrées localement mais pas encore remontées. */
   pending: number;
   syncing: boolean;
+  /**
+   * Opérations que le serveur a nommément refusées, avec le motif. `null` quand
+   * il n'y en a pas : un simple retard de réseau n'est pas un refus.
+   */
+  refus: RefusEnAttente | null;
   flush: () => Promise<void>;
 }
 
@@ -25,7 +30,9 @@ export function useSync(): SyncState {
   const notify = useToast();
   const [syncing, setSyncing] = useState(false);
   const pending = useLiveQuery(() => pendingCount(), [], 0) ?? 0;
+  const refus = useLiveQuery(() => refusEnAttente(), [], null) ?? null;
   const wasPending = useRef(0);
+  const refusAnnonce = useRef<string | null>(null);
 
   const flush = useCallback(async (): Promise<void> => {
     if (!navigator.onLine) return;
@@ -52,5 +59,18 @@ export function useSync(): SyncState {
     }
   }, [pending, notify]);
 
-  return { online, pending, syncing, flush };
+  // Un refus du serveur ne se résoudra pas tout seul : on le dit une fois, au
+  // lieu de laisser le badge « en attente » allumé sans explication.
+  useEffect(() => {
+    if (!refus) {
+      refusAnnonce.current = null;
+      return;
+    }
+    if (refusAnnonce.current === refus.motif) return;
+    refusAnnonce.current = refus.motif;
+    const plural = refus.nombre > 1 ? 's' : '';
+    notify('error', `${refus.nombre} opération${plural} refusée${plural} : ${refus.motif}`);
+  }, [refus, notify]);
+
+  return { online, pending, syncing, refus, flush };
 }
