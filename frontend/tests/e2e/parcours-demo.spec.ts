@@ -9,13 +9,10 @@ import { expect, test, type Page } from '@playwright/test';
 async function seConnecter(page: Page): Promise<void> {
   await page.goto('/connexion');
   await page.getByLabel('Numéro de téléphone').fill('0190000001');
-  await page.getByRole('button', { name: 'Envoyez le code OTP' }).click();
-
-  await expect(page.getByRole('heading', { name: 'Vérification' })).toBeVisible();
-  for (let index = 0; index < 6; index += 1) {
-    await page.getByLabel(`Chiffre ${index + 1} sur 6`).fill('1');
-  }
-  await page.getByRole('button', { name: 'Suivant' }).click();
+  // `exact` : sans lui, le libellé attraperait aussi le bouton « Afficher le
+  // mot de passe » posé à droite du champ.
+  await page.getByLabel('Mot de passe', { exact: true }).fill('111111');
+  await page.getByRole('button', { name: 'Se connecter' }).click();
   await expect(page.getByRole('heading', { name: /Bienvenue,/ })).toBeVisible();
 }
 
@@ -27,15 +24,20 @@ test.describe('Parcours de démonstration', () => {
     await expect(page.getByRole('heading', { name: 'Bienvenue !' })).toBeVisible();
   });
 
-  test("le bouton d'envoi reste inactif tant que le numéro est incomplet", async ({ page }) => {
+  test('le bouton de connexion reste inactif tant que la saisie est incomplète', async ({
+    page,
+  }) => {
     await page.goto('/connexion');
-    const bouton = page.getByRole('button', { name: 'Envoyez le code OTP' });
+    const bouton = page.getByRole('button', { name: 'Se connecter' });
     await expect(bouton).toBeDisabled();
 
     await page.getByLabel('Numéro de téléphone').fill('019000');
     await expect(bouton).toBeDisabled();
 
     await page.getByLabel('Numéro de téléphone').fill('0190000001');
+    await expect(bouton).toBeDisabled();
+
+    await page.getByLabel('Mot de passe', { exact: true }).fill('111111');
     await expect(bouton).toBeEnabled();
   });
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { DEMO_MODE } from '@/lib/api';
 
 /**
  * Client Supabase du navigateur.
@@ -20,9 +21,17 @@ const CLE = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
 let instance: SupabaseClient | null = null;
 
-/** `null` quand aucun projet n'est configuré : l'application reste utilisable hors ligne. */
+/**
+ * `null` quand aucun projet n'est configuré : l'application reste utilisable
+ * hors ligne.
+ *
+ * Le mode démonstration l'emporte sur la présence des clés. Sans cela, un
+ * environnement configuré pour la démonstration mais portant tout de même les
+ * clés du projet tenterait une vraie authentification, et la démonstration
+ * échouerait sur un écran de connexion — ce qui est arrivé.
+ */
 export function supabase(): SupabaseClient | null {
-  if (!URL || !CLE) return null;
+  if (DEMO_MODE || !URL || !CLE) return null;
   instance ??= createClient(URL, CLE, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
   });
