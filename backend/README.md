@@ -14,11 +14,20 @@ Base de données, API, synchronisation serveur et IA vocale.
 | --- | --- |
 | `supabase/migrations/` | Schéma SQL et politiques RLS |
 | `contracts/api.ts` | Types requête / réponse |
-| `src/sync/` | Upsert idempotent (`client_uuid`) |
-| `src/voice/` | Parseur FR local + LLM optionnel (Groq) |
+| `src/sync/normalize.ts` | Lecture et validation d'une entrée de la file |
+| `src/sync/process-batch.ts` | Écriture idempotente (`client_uuid`), Supabase ou mémoire |
+| `src/voice/french-numbers.ts` | Montants dictés (« quatre-vingt-dix mille ») |
+| `src/voice/parse.ts` | Type d'opération, membre, date, confiance |
+| `src/voice/llm.ts` | Modèle distant optionnel (Groq), réponse revalidée |
 | `src/receipts/` | WhatsApp / SMS (mock si pas de jeton) |
+| `src/handlers.ts` | Validation des requêtes, sans dépendance au transport |
 | `src/server.ts` | Serveur HTTP autonome (port 3460) |
-| `../frontend/app/api/*` | Adaptateurs Next (même handlers) |
+| `../frontend/app/api/*` | Routes Next **indépendantes** — même contrat, autre code |
+
+Les routes Next du frontend n'importent pas ce dossier : Vercel déploie
+`frontend/` comme racine. Les deux implémentations se rejoignent sur
+`contracts/api.ts`, et toute règle métier changée ici doit l'être des deux
+côtés.
 
 ## Mise en route
 
@@ -73,7 +82,22 @@ Next) **ou** pointer vers `http://127.0.0.1:3460` pour le serveur autonome.
 
 ## Points d'attention
 
-- **Montants = entiers FCFA.** Refus des floats.
-- **`client_uuid` unique** → rejeu de file sans doublon.
+- **Montants = entiers FCFA.** Refus des floats, et refus au-delà de
+  2 147 483 647 (capacité de la colonne `integer`).
+- **`client_uuid` unique** → rejeu de file sans doublon. Les tables `groups` et
+  `members` n'ayant pas cette colonne, le `client_uuid` y sert d'identifiant :
+  il doit donc être un UUID, comme le produit `crypto.randomUUID()`.
+- **Ordre d'écriture** : caisses, puis membres, puis opérations — sinon la clé
+  étrangère refuse une cotisation arrivée avant sa caisse.
+- **Lot plafonné à 200 opérations**, corps de requête à 1 Mio.
+- **Types d'opération** contrôlés contre la contrainte `check` avant l'envoi en
+  base : une valeur hors liste est rejetée avec une phrase lisible.
 - **RLS** : une trésorière ne voit que ses caisses.
-- **Voix** : jamais inventer un montant ; `amount: null` si doute.
+- **Voix** : jamais inventer un montant ; `amount: null` si doute. La réponse du
+  modèle distant est revalidée, nom du membre compris.
+
+## Tests
+
+`npm run verify` enchaîne `tsc --noEmit` puis les tests. Les cas couverts
+tiennent aux erreurs déjà rencontrées : rejeu d'un lot, entrée illisible,
+montant décimal, phrase sans mot-clé, réponse aberrante du modèle.
