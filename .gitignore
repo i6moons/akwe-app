@@ -37,3 +37,6 @@ captures/
 
 # Genere par scripts/build-sw.mjs a chaque build
 frontend/public/sw.js
+
+# Cache Deno local, cree en executant les tests des fonctions Supabase
+backend/.deno-cache/
