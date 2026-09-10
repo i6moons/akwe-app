@@ -23,8 +23,9 @@ function withParams(path: string, params: Record<string, string>): Route {
 export const routes = {
   splash: '/' as Route,
   connexion: '/connexion' as Route,
-  verification: '/verification' as Route,
-  profil: '/profil' as Route,
+  inscription: '/inscription' as Route,
+  motDePasse: '/mot-de-passe' as Route,
+  inscriptionReussie: '/inscription/succes' as Route,
   accueil: '/accueil' as Route,
   operations: '/operations' as Route,
   caisses: '/caisses' as Route,
@@ -53,8 +54,9 @@ export const routes = {
 export const STATIC_PATHS = [
   '/',
   '/connexion',
-  '/verification',
-  '/profil',
+  '/inscription',
+  '/inscription/succes',
+  '/mot-de-passe',
   '/accueil',
   '/operations',
   '/caisses',

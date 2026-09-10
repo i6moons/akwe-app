@@ -12,7 +12,9 @@ import { routes, STATIC_PATHS } from '@/lib/routes';
 const ALL = [
   routes.splash,
   routes.connexion,
-  routes.verification,
+  routes.inscription,
+  routes.motDePasse,
+  routes.inscriptionReussie,
   routes.accueil,
   routes.operations,
   routes.caisses,
