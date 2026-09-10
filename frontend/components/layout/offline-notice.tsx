@@ -1,6 +1,6 @@
 'use client';
 
-import { CloudOff, Info, RefreshCw } from 'lucide-react';
+import { AlertTriangle, CloudOff, Info, RefreshCw } from 'lucide-react';
 import { useSync } from '@/lib/hooks/use-sync';
 
 /**
@@ -32,9 +32,30 @@ export function OfflineNotice() {
  * quand on rebranche la connexion.
  */
 export function SyncIndicator() {
-  const { online, pending, syncing, flush } = useSync();
+  const { online, pending, syncing, refus, flush } = useSync();
 
   if (online && pending === 0) return null;
+
+  /*
+   * Un refus du serveur n'est pas un retard : réessayer n'y changera rien. Il
+   * est donc annoncé à part, avec son motif, plutôt que fondu dans le décompte
+   * « en attente » qui laissait la trésorière attendre indéfiniment.
+   */
+  if (refus) {
+    const pluralRefus = refus.nombre > 1 ? 's' : '';
+    return (
+      <div className="bg-danger-600 flex gap-3 rounded-xl p-3 text-white" role="alert">
+        <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden />
+        <div className="text-sm">
+          <p className="font-semibold">
+            {refus.nombre} opération{pluralRefus} n&apos;{refus.nombre > 1 ? 'ont' : 'a'} pas pu
+            être enregistrée{pluralRefus}
+          </p>
+          <p className="text-white/90">Motif : {refus.motif}.</p>
+        </div>
+      </div>
+    );
+  }
 
   const plural = pending > 1 ? 's' : '';
   const message = online

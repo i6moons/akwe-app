@@ -1,4 +1,5 @@
 import { getDb, type OutboxEntry } from '@/lib/db/schema';
+import type { ReponseSync } from '@/lib/sync/client';
 
 /**
  * File d'attente de synchronisation.
@@ -24,6 +25,7 @@ export async function enqueue(
     status: 'pending',
     attempts: 0,
     lastError: null,
+    refusedByServer: false,
     createdAt: new Date().toISOString(),
   });
 }
@@ -62,7 +64,39 @@ export interface SyncOutcome {
   failed: number;
 }
 
-type Sender = (entries: readonly OutboxEntry[]) => Promise<{ confirmed: string[] }>;
+type Sender = (entries: readonly OutboxEntry[]) => Promise<ReponseSync>;
+
+/** Refus explicites du serveur restant dans la file, et leur motif dominant. */
+export interface RefusEnAttente {
+  nombre: number;
+  motif: string;
+}
+
+/**
+ * Ce que le serveur a nommément refusé et qui attend encore.
+ *
+ * La trésorière voyait « N opérations en attente » sans jamais savoir que
+ * certaines ne partiraient pas, ni pourquoi. Le motif remonte maintenant
+ * jusqu'à elle.
+ */
+export async function refusEnAttente(): Promise<RefusEnAttente | null> {
+  const rows = await getDb()
+    .outbox.where('status')
+    .anyOf(...EN_ATTENTE)
+    .toArray();
+  const refuses = rows.filter((entry) => entry.refusedByServer === true);
+  if (refuses.length === 0) return null;
+
+  // Un même motif touche en général toutes les lignes concernées ; on montre le
+  // plus fréquent plutôt que d'énumérer.
+  const comptes = new Map<string, number>();
+  for (const entry of refuses) {
+    const motif = entry.lastError ?? 'refusée par le serveur';
+    comptes.set(motif, (comptes.get(motif) ?? 0) + 1);
+  }
+  const [motif] = [...comptes.entries()].sort((a, b) => b[1] - a[1])[0]!;
+  return { nombre: refuses.length, motif };
+}
 
 /**
  * Vide la file par lot. `send` est injecté pour que les tests n'aient pas besoin
@@ -114,7 +148,7 @@ async function envoyerLot(entries: readonly OutboxEntry[], send: Sender): Promis
   await db.outbox.bulkUpdate(ids.map((id) => ({ key: id, changes: { status: 'sending' } })));
 
   try {
-    const { confirmed } = await send(entries);
+    const { confirmed, rejected } = await send(entries);
     const confirmedSet = new Set(confirmed);
     const done = entries.filter((entry) => confirmedSet.has(entry.clientUuid));
 
@@ -124,11 +158,14 @@ async function envoyerLot(entries: readonly OutboxEntry[], send: Sender): Promis
     await markTransactionsSynced(done);
 
     const remaining = entries.length - done.length;
-    if (remaining > 0) await markFailed(entries, confirmedSet, 'Non confirmé par le serveur');
+    if (remaining > 0) {
+      const motifs = new Map(rejected.map((refus) => [refus.clientUuid, refus.reason]));
+      await markFailed(entries, confirmedSet, motifs, 'Non confirmé par le serveur');
+    }
     return { sent: done.length, failed: remaining };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erreur réseau';
-    await markFailed(entries, new Set(), message);
+    await markFailed(entries, new Set(), new Map(), message);
     return { sent: 0, failed: entries.length };
   }
 }
@@ -146,19 +183,34 @@ async function markTransactionsSynced(entries: readonly OutboxEntry[]): Promise<
   );
 }
 
+/**
+ * `motifs` porte les refus nommés par le serveur ; `defaut` couvre le reste,
+ * c'est-à-dire une panne de transport ou un lot resté sans réponse. La
+ * distinction est conservée sur l'entrée : seul le premier cas mérite d'être
+ * montré à la trésorière, le second se réglera tout seul au retour du réseau.
+ */
 async function markFailed(
   entries: readonly OutboxEntry[],
   confirmed: ReadonlySet<string>,
-  reason: string,
+  motifs: ReadonlyMap<string, string>,
+  defaut: string,
 ): Promise<void> {
   const db = getDb();
   const stuck = entries.filter((entry) => !confirmed.has(entry.clientUuid));
   await db.outbox.bulkUpdate(
     stuck
       .filter((entry) => entry.id !== undefined)
-      .map((entry) => ({
-        key: entry.id!,
-        changes: { status: 'failed' as const, attempts: entry.attempts + 1, lastError: reason },
-      })),
+      .map((entry) => {
+        const refus = motifs.get(entry.clientUuid);
+        return {
+          key: entry.id!,
+          changes: {
+            status: 'failed' as const,
+            attempts: entry.attempts + 1,
+            lastError: refus ?? defaut,
+            refusedByServer: refus !== undefined,
+          },
+        };
+      }),
   );
 }

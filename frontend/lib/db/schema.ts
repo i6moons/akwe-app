@@ -15,6 +15,14 @@ export interface OutboxEntry {
   status: 'pending' | 'sending' | 'failed';
   attempts: number;
   lastError: string | null;
+  /**
+   * Vrai quand le serveur a nommément refusé l'opération, par opposition à un
+   * échec de transport. Le premier ne se résoudra jamais tout seul et doit être
+   * montré à la trésorière ; le second repartira au retour du réseau.
+   *
+   * Champ non indexé : Dexie l'accepte sans changement de version du schéma.
+   */
+  refusedByServer?: boolean;
   createdAt: string;
 }
 
