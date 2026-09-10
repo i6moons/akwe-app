@@ -14,3 +14,26 @@ export function apiUrl(path: string): string {
 
 /** `true` quand la démo tourne sans backend : aucun appel réseau n'est tenté. */
 export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+
+/**
+ * Délai au-delà duquel on considère le réseau muet.
+ *
+ * `fetch` n'expire pas de lui-même : une requête partie sur une antenne sans
+ * débit — le cas courant ici — reste pendante indéfiniment. Or plusieurs
+ * modules mémorisent la promesse en cours pour éviter les appels concurrents
+ * (`lib/sync/outbox.ts`, `lib/supabase/colonnes.ts`). Une promesse qui ne se
+ * dénoue jamais y bloque donc *tous* les appels suivants, jusqu'au rechargement
+ * de la page : la trésorière voit sa file d'attente gelée sans un mot.
+ *
+ * Mieux vaut un échec net, que l'appelant sait traiter, qu'une attente sans fin.
+ */
+export const DELAI_RESEAU_MS = 20_000;
+
+/** `fetch` avec échéance. Rejette au-delà du délai au lieu d'attendre. */
+export function fetchAvecDelai(
+  url: string,
+  init: RequestInit = {},
+  delaiMs: number = DELAI_RESEAU_MS,
+): Promise<Response> {
+  return fetch(url, { ...init, signal: init.signal ?? AbortSignal.timeout(delaiMs) });
+}

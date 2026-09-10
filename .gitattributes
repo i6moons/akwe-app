@@ -1,0 +1,30 @@
+# Fins de ligne : LF dans le dépôt comme dans la copie de travail.
+#
+# Sans ce fichier, un poste Windows avec `core.autocrlf=true` extrait tout en
+# CRLF. Or Prettier attend du LF (`endOfLine: "lf"`, sa valeur par défaut) :
+# `npm run format:check` échouait donc sur la totalité des fichiers, et
+# `npm run verify` était inutilisable en local — alors que la CI, sous Linux,
+# passait au vert sur les mêmes commits. Les deux voient désormais la même chose.
+#
+# Après le premier commit qui inclut ce fichier, une normalisation unique
+# aligne la copie de travail (travaux en cours à committer AVANT) :
+#
+#     git add --renormalize .
+#     git checkout-index -a -f
+#
+* text=auto eol=lf
+
+# Images et icônes : jamais réécrites.
+*.png binary
+*.ico binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+
+# Verrous de dépendances : générés, illisibles en revue.
+package-lock.json -diff linguist-generated
+pnpm-lock.yaml    -diff linguist-generated

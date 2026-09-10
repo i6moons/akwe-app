@@ -48,7 +48,7 @@ export function VoiceStep({
     <main className="safe-bottom min-h-dvh pb-8">
       <AppHeader
         title={group?.name ?? 'Enregistrer une opération'}
-        subtitle="Ici se trouve les informations liés à votre caisse"
+        subtitle="Ici se trouvent les informations liées à votre caisse"
       />
 
       <div className="px-4 pt-4">

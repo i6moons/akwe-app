@@ -1,8 +1,15 @@
 import { parseAmount } from '@/lib/format';
+import { TRANSACTION_TYPES, isTransactionType, type TransactionType } from '@/lib/types';
 
-/** Types d'opération autorisés (SPEC). Tout autre libellé devient `unknown`. */
-export const ALLOWED_TYPES = ['contribution', 'payout', 'loan'] as const;
-export type AllowedType = (typeof ALLOWED_TYPES)[number];
+/**
+ * Types d'opération autorisés. Tout autre libellé devient `unknown`.
+ *
+ * La liste est celle de `lib/types.ts` : celle qui vivait ici n'en comptait que
+ * trois, et ramenait donc « a remboursé » et « frais » à `unknown` — alors même
+ * que `lib/voice/keywords.ts` sait les reconnaître et que la base les accepte.
+ */
+export const ALLOWED_TYPES = TRANSACTION_TYPES;
+export type AllowedType = TransactionType;
 export type VoiceType = AllowedType | 'unknown';
 
 export const DEMO_TRANSCRIPT = "Kossi a versé deux mille francs aujourd'hui";
@@ -21,14 +28,14 @@ Champs exacts :
 {
   "member_name": string | null,
   "amount": number | null,
-  "type": "contribution" | "payout" | "loan" | "unknown",
+  "type": "contribution" | "repayment" | "payout" | "loan" | "fee" | "unknown",
   "occurred_at": string | null,
   "confidence": number,
   "clarification": string | null
 }
 Règles :
 - amount : entier en FCFA. Si tu n'es pas sûr, null. N'arrondis JAMAIS. Pas de virgule.
-- type : versé / cotisé / payé → contribution ; tour / reçu / retrait → payout ; prêt / avance → loan.
+- type : versé / cotisé / payé / donné → contribution ; remboursé / a rendu → repayment ; tour / reçu / retrait → payout ; prêt / avance → loan ; frais / amende / pénalité / dépense → fee.
 - occurred_at : ISO 8601. Interprète aujourd'hui, hier, avant-hier par rapport à la date fournie. Jamais une date future.
 - member_name : copie exacte d'un nom de la liste, sinon null.
 - Phrase floue : amount null et clarification courte en français simple.`;
@@ -97,8 +104,7 @@ export function validateAmount(raw: unknown): number | null {
 }
 
 export function validateType(raw: unknown): VoiceType {
-  if (typeof raw !== 'string') return 'unknown';
-  return (ALLOWED_TYPES as readonly string[]).includes(raw) ? (raw as AllowedType) : 'unknown';
+  return isTransactionType(raw) ? raw : 'unknown';
 }
 
 export function validateOccurredAt(raw: unknown, today: string): string | null {
@@ -191,7 +197,7 @@ export function validateModelPayload(
   if (amount === null) {
     clarification = clarification ?? 'Quel montant, en francs CFA ?';
   } else if (!member) {
-    clarification = clarification ?? 'De quelle membre s’agit-il ?';
+    clarification = clarification ?? 'De quel membre s’agit-il ?';
   }
 
   return {

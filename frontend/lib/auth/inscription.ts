@@ -1,6 +1,6 @@
 'use client';
 
-import { apiUrl } from '@/lib/api';
+import { apiUrl, fetchAvecDelai } from '@/lib/api';
 
 /**
  * Création du compte : nom, numéro, et code fixe à six chiffres.
@@ -17,7 +17,9 @@ export async function sInscrire(
   code: string,
 ): Promise<EchecInscription | null> {
   try {
-    const reponse = await fetch(apiUrl('/api/auth/inscription'), {
+    // L'échéance retombe dans le `catch` ci-dessous, donc sur « reseau » : la
+    // trésorière voit un message et peut réessayer, au lieu d'un bouton figé.
+    const reponse = await fetchAvecDelai(apiUrl('/api/auth/inscription'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone, fullName, code }),

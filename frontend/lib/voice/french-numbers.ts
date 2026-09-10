@@ -55,12 +55,30 @@ export function normalize(text: string): string {
     .trim();
 }
 
+/**
+ * Nombre à décimales : un ou deux chiffres après un point ou une virgule.
+ *
+ * « 3.000 » est un séparateur de milliers, mais « 2.5 » est une décimale — et
+ * comme `normalize` remplace la ponctuation par une espace, le montant devenait
+ * « 2 5 » puis 25 : dix fois la somme annoncée, enregistrée sans un mot. Un
+ * franc CFA ne se divise pas ; ces nombres sont donc retirés de la phrase avant
+ * lecture, quitte à poser la question.
+ */
+const DECIMAL_NUMBER = /\d+[.,]\d{1,2}(?!\d)/g;
+
+/** `integer` PostgreSQL : au-delà, la base refuse l'écriture par débordement. */
+const MAX_INT4 = 2_147_483_647;
+
 function fromDigits(raw: string, suffix?: string): number | null {
   const base = Number.parseInt(raw.replace(/[\s.]/g, ''), 10);
   if (!Number.isSafeInteger(base) || base <= 0) return null;
-  if (suffix === 'k' || suffix === 'mille') return base * 1000;
-  if (suffix?.startsWith('million')) return base * 1_000_000;
-  return base;
+  const value =
+    suffix === 'k' || suffix === 'mille'
+      ? base * 1000
+      : suffix?.startsWith('million')
+        ? base * 1_000_000
+        : base;
+  return value <= MAX_INT4 ? value : null;
 }
 
 /**
@@ -103,28 +121,52 @@ function parseSpoken(tokens: readonly string[]): number | null {
 }
 
 /**
- * Extrait le premier montant entier trouvé dans une phrase.
+ * Découpe la phrase en suites de mots-nombres *contigus*.
+ *
+ * Rassembler tous les mots-nombres de la phrase mélangeait des nombres qui ne
+ * se suivaient pas : « deux membres ont donné trois mille » additionnait
+ * « deux » et « trois » et annonçait 5 000 F au lieu de 3 000 F.
+ */
+function spokenRuns(words: readonly string[]): string[][] {
+  const runs: string[][] = [];
+  let run: string[] = [];
+
+  const flush = (): void => {
+    if (run.some((word) => word !== 'et')) runs.push(run);
+    run = [];
+  };
+
+  for (const word of words) {
+    if (NUMBER_WORDS.has(word)) run.push(word);
+    else flush();
+  }
+  flush();
+
+  return runs;
+}
+
+/**
+ * Extrait le dernier montant entier sûr d'une phrase.
  * Retourne `null` plutôt que de deviner : un montant inventé est pire que pas de
  * montant du tout.
  */
 export function parseFrenchAmount(sentence: string): number | null {
-  const text = normalize(sentence).replace(/-/g, ' ');
+  const text = normalize(sentence.replace(DECIMAL_NUMBER, ' ')).replace(/-/g, ' ');
 
   // Montant collé à une unité : « 10.000 F », « 2k », « 3 mille ».
   const withUnit = [...text.matchAll(/(\d[\d\s.]*)\s*(k|mille|millions?|f(?:cfa)?|francs?)\b/g)];
-  if (withUnit.length > 0) {
-    const last = withUnit[withUnit.length - 1]!;
-    const amount = fromDigits(last[1] ?? '', last[2]);
+  for (const match of withUnit.reverse()) {
+    const amount = fromDigits(match[1] ?? '', match[2]);
     if (amount !== null) return amount;
   }
 
-  const words = text.split(' ').filter((word) => NUMBER_WORDS.has(word));
-  const spoken = parseSpoken(words);
-  if (spoken !== null) {
-    const hasCurrency = /\b(f|fcfa|francs?|cfa)\b/.test(text);
-    const hasScale = words.some(
-      (word) => word in MULTIPLIERS || word === 'cent' || word === 'cents',
-    );
+  const hasCurrency = /\b(f|fcfa|francs?|cfa)\b/.test(text);
+  for (const run of spokenRuns(text.split(' ')).reverse()) {
+    const spoken = parseSpoken(run);
+    if (spoken === null || spoken > MAX_INT4) continue;
+    // Sous cent, sans unité ni échelle, « cinq » est plus souvent un nombre de
+    // parts ou de jours qu'un montant : on préfère poser la question.
+    const hasScale = run.some((word) => word in MULTIPLIERS || word === 'cent' || word === 'cents');
     if (spoken >= 100 || hasCurrency || hasScale) return spoken;
   }
 

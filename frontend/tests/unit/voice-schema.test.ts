@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { demoResponse, isDemoTranscript, validateModelPayload } from '@/lib/voice/schema';
+import {
+  demoResponse,
+  isDemoTranscript,
+  validateModelPayload,
+  validateType,
+} from '@/lib/voice/schema';
 
 const members = [
   { id: 'grp-ayaba-m5', full_name: 'Kossi Agbodjan' },
@@ -23,5 +28,21 @@ describe('voice schema', () => {
     );
     expect(parsed.amount).toBeNull();
     expect(parsed.clarification).toBeTruthy();
+  });
+
+  it('accepte les cinq types de la base, pas seulement trois', () => {
+    // « a remboursé » et « frais » devenaient `unknown` : la liste locale n'en
+    // connaissait que trois, alors que la base et la dictée en acceptent cinq.
+    expect(validateType('contribution')).toBe('contribution');
+    expect(validateType('repayment')).toBe('repayment');
+    expect(validateType('payout')).toBe('payout');
+    expect(validateType('loan')).toBe('loan');
+    expect(validateType('fee')).toBe('fee');
+  });
+
+  it('ramène tout libellé inventé à « unknown »', () => {
+    expect(validateType('cadeau')).toBe('unknown');
+    expect(validateType(42)).toBe('unknown');
+    expect(validateType(null)).toBe('unknown');
   });
 });

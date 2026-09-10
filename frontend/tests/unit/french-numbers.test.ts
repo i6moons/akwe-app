@@ -48,4 +48,25 @@ describe('parseFrenchAmount', () => {
     expect(value).not.toBeNull();
     expect(Number.isInteger(value)).toBe(true);
   });
+
+  it('ne mélange pas deux nombres qui ne se suivent pas', () => {
+    // « deux » compte des membres, « trois mille » est le montant.
+    expect(parseFrenchAmount('deux membres ont donné trois mille francs')).toBe(3000);
+    expect(parseFrenchAmount('les trois du groupe ont versé cinq mille')).toBe(5000);
+  });
+
+  it('refuse un montant à décimales plutôt que de le décupler', () => {
+    // La ponctuation devenait une espace : « 2.5 » se lisait « 2 5 », donc 25.
+    expect(parseFrenchAmount('Adjovi a payé 2.5 francs')).toBeNull();
+    expect(parseFrenchAmount('Adjovi a payé 2,5 francs')).toBeNull();
+  });
+
+  it('lit le montant même précédé d’une date à décimales', () => {
+    expect(parseFrenchAmount('reunion du 12.03, elle a versé 2000 francs')).toBe(2000);
+  });
+
+  it('refuse un montant que la colonne entière ne peut pas stocker', () => {
+    expect(parseFrenchAmount('9 999 999 999 francs')).toBeNull();
+    expect(parseFrenchAmount('deux millions de francs')).toBe(2_000_000);
+  });
 });

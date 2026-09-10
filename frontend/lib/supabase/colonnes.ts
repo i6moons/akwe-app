@@ -12,6 +12,8 @@
  * sur un schéma incomplet ; la migration `0004` la rend complète.
  */
 
+import { fetchAvecDelai } from '@/lib/api';
+
 const URL_BASE = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 const CLE = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
 
@@ -19,7 +21,9 @@ const CLE = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
 let cache: Promise<Record<string, string[]>> | null = null;
 
 async function decrire(): Promise<Record<string, string[]>> {
-  const reponse = await fetch(`${URL_BASE}/rest/v1/`, {
+  // La promesse ci-dessus est mémorisée : sans échéance, une requête pendante
+  // se figeait dans le cache et bloquait toute écriture ultérieure du processus.
+  const reponse = await fetchAvecDelai(`${URL_BASE}/rest/v1/`, {
     headers: { apikey: CLE, Authorization: `Bearer ${CLE}` },
     cache: 'no-store',
   });
