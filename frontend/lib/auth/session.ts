@@ -10,6 +10,15 @@
 
 const STORAGE_KEY = 'akwe.session';
 
+/**
+ * Ce que l'on affiche tant que la trésorière ne s'est pas nommée.
+ *
+ * Une fonction, pas un prénom inventé : accueillir tout le monde par « Adjovi »
+ * donnait à chaque compte la même identité, et sonnait faux dès la deuxième
+ * personne qui ouvrait l'application.
+ */
+const NOM_PAR_DEFAUT = 'Trésorière';
+
 export interface Session {
   phone: string;
   displayName: string;
@@ -31,7 +40,7 @@ export function getSession(): Session | null {
     if (typeof parsed.phone !== 'string') return null;
     return {
       phone: parsed.phone,
-      displayName: typeof parsed.displayName === 'string' ? parsed.displayName : 'Adjovi',
+      displayName: typeof parsed.displayName === 'string' ? parsed.displayName : NOM_PAR_DEFAUT,
       since: typeof parsed.since === 'string' ? parsed.since : new Date().toISOString(),
       accessToken: typeof parsed.accessToken === 'string' ? parsed.accessToken : undefined,
     };
@@ -40,7 +49,11 @@ export function getSession(): Session | null {
   }
 }
 
-export function openSession(phone: string, displayName = 'Adjovi', accessToken?: string): Session {
+export function openSession(
+  phone: string,
+  displayName = NOM_PAR_DEFAUT,
+  accessToken?: string,
+): Session {
   const session: Session = {
     phone,
     displayName,
@@ -49,6 +62,13 @@ export function openSession(phone: string, displayName = 'Adjovi', accessToken?:
   };
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
   return session;
+}
+
+/** Met à jour le nom affiché sans toucher au jeton ni rouvrir la session. */
+export function renommerSession(displayName: string): void {
+  const session = getSession();
+  if (!session) return;
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...session, displayName }));
 }
 
 export function closeSession(): void {

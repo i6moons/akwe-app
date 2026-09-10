@@ -27,6 +27,10 @@ export async function preparerCarnet(): Promise<void> {
   // Hors démonstration, rien n'est préparé tant que personne n'est connectée :
   // les données créées n'appartiendraient alors à aucun compte.
   if (!getSession()) return;
+
+  // Aucun jeu d'exemple ici, et c'est délibéré : un compte neuf ouvre sur un
+  // carnet vide, que la trésorière remplit avec ses propres caisses. Semer des
+  // tontines inventées donnerait une application déjà pleine de données
+  // n'appartenant à personne, et noierait ce qu'elle vient d'enregistrer.
   await hydrater();
-  await seedDemoData();
 }

@@ -1,43 +1,11 @@
 import { NextResponse } from 'next/server';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { identifier } from '@/lib/auth/appelante';
 import { ensureProfile, isDemoMode, serviceClient } from '@/lib/supabase/server';
 import { separerParEntite } from '@/lib/sync/entities';
 import { chargerContexte, ecrireLot } from '@/lib/sync/persist';
 import { MAX_SYNC_BATCH } from '@/lib/sync/validate';
 
 export const dynamic = 'force-dynamic';
-
-interface Appelante {
-  id: string;
-  phone: string;
-  fullName: string;
-}
-
-async function identifier(
-  request: Request,
-  supabase: SupabaseClient | null,
-): Promise<Appelante | null> {
-  const header = request.headers.get('authorization') ?? '';
-  const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
-  if (!token) return null;
-
-  // Jeton de démonstration : accepté uniquement sans base, ou en mode démo. Il
-  // ne peut donc jamais servir à écrire dans les données réelles.
-  if (token === 'demo' && (isDemoMode() || !supabase)) {
-    return { id: 'demo-user', phone: '0000000000', fullName: 'Démonstration' };
-  }
-  if (!supabase) return null;
-
-  const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data.user) return null;
-
-  const meta = data.user.user_metadata ?? {};
-  return {
-    id: data.user.id,
-    phone: typeof meta.phone === 'string' ? meta.phone : (data.user.email ?? '').split('@')[0]!,
-    fullName: typeof meta.full_name === 'string' ? meta.full_name : 'Trésorière',
-  };
-}
 
 export async function POST(request: Request) {
   const supabase = serviceClient();

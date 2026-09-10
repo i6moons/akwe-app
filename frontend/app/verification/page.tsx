@@ -47,15 +47,16 @@ export default function VerificationPage() {
     setEnCours(true);
     setErreur(null);
 
-    const echec = await seConnecter(phone, code.replace(/\D/g, ''));
-    if (echec === null) {
-      router.replace(routes.accueil);
+    const resultat = await seConnecter(phone, code.replace(/\D/g, ''));
+    if (resultat.ok) {
+      // Première connexion : on lui demande son nom avant de lui ouvrir son carnet.
+      router.replace(resultat.nouveau ? routes.profil : routes.accueil);
       return;
     }
 
     setEnCours(false);
     setErreur(
-      echec === 'code'
+      resultat.cause === 'code'
         ? 'Ce code ne correspond pas à ce numéro.'
         : 'Connexion impossible. Vérifiez votre réseau.',
     );

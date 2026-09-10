@@ -16,8 +16,16 @@ import { preparerCarnet } from '@/lib/db/preparer';
 
 export type Echec = 'code' | 'reseau';
 
-export async function seConnecter(phone: string, code: string): Promise<Echec | null> {
+/**
+ * `nouveau` distingue une première connexion d'un retour. L'écran s'en sert pour
+ * demander son nom à la trésorière, une seule fois, plutôt que de lui en prêter
+ * un d'office.
+ */
+export type Connexion = { ok: true; nouveau: boolean } | { ok: false; cause: Echec };
+
+export async function seConnecter(phone: string, code: string): Promise<Connexion> {
   let horsLigne = false;
+  let nouveau = false;
 
   try {
     const reponse = await fetch(apiUrl('/api/auth/acces'), {
@@ -25,10 +33,14 @@ export async function seConnecter(phone: string, code: string): Promise<Echec | 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone, code }),
     });
-    if (!reponse.ok) return reponse.status === 400 ? 'code' : 'reseau';
-    horsLigne = Boolean(((await reponse.json()) as { horsLigne?: boolean }).horsLigne);
+    if (!reponse.ok) {
+      return { ok: false, cause: reponse.status === 400 ? 'code' : 'reseau' };
+    }
+    const donnees = (await reponse.json()) as { horsLigne?: boolean; nouveau?: boolean };
+    horsLigne = Boolean(donnees.horsLigne);
+    nouveau = Boolean(donnees.nouveau);
   } catch {
-    return 'reseau';
+    return { ok: false, cause: 'reseau' };
   }
 
   const client = supabase();
@@ -37,7 +49,7 @@ export async function seConnecter(phone: string, code: string): Promise<Echec | 
   if (horsLigne || !client) {
     openSession(phone);
     await preparerCarnet();
-    return null;
+    return { ok: true, nouveau: false };
   }
 
   const { data, error } = await client.auth.signInWithPassword({
@@ -45,12 +57,12 @@ export async function seConnecter(phone: string, code: string): Promise<Echec | 
     password: code,
   });
 
-  if (error || !data.session) return 'code';
+  if (error || !data.session) return { ok: false, cause: 'code' };
 
-  const nom = (data.user?.user_metadata?.full_name as string | undefined) ?? 'Trésorière';
+  const nom = data.user?.user_metadata?.full_name as string | undefined;
   openSession(phone, nom, data.session.access_token);
   // Le carnet est rapatrié avant l'arrivée sur l'accueil : les fournisseurs sont
   // déjà montés et ne relanceraient pas la préparation d'eux-mêmes.
   await preparerCarnet();
-  return null;
+  return { ok: true, nouveau };
 }
