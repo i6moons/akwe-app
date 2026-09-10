@@ -28,12 +28,29 @@ export async function enqueue(
   });
 }
 
+/**
+ * Les trois statuts comptent comme « pas encore arrivé ».
+ *
+ * `sending` en fait partie, et ce n'est pas un détail : une écriture que deux
+ * synchronisations simultanées se disputaient pouvait y rester coincée. Ni le
+ * compteur ni la file ne regardaient ce statut, si bien que l'opération
+ * devenait invisible et n'était plus jamais réessayée — le badge annonçait
+ * « 0 en attente » alors qu'une cotisation n'était jamais partie.
+ */
+const EN_ATTENTE = ['pending', 'failed', 'sending'] as const;
+
 export async function pendingCount(): Promise<number> {
-  return getDb().outbox.where('status').anyOf('pending', 'failed').count();
+  return getDb()
+    .outbox.where('status')
+    .anyOf(...EN_ATTENTE)
+    .count();
 }
 
 export async function pendingEntries(): Promise<OutboxEntry[]> {
-  const rows = await getDb().outbox.where('status').anyOf('pending', 'failed').toArray();
+  const rows = await getDb()
+    .outbox.where('status')
+    .anyOf(...EN_ATTENTE)
+    .toArray();
   return rows
     .filter((entry) => entry.attempts < MAX_ATTEMPTS)
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -51,10 +68,47 @@ type Sender = (entries: readonly OutboxEntry[]) => Promise<{ confirmed: string[]
  * Vide la file par lot. `send` est injecté pour que les tests n'aient pas besoin
  * du réseau, et pour que l'endpoint réel reste du ressort du lead technique.
  */
-export async function flushOutbox(send: Sender): Promise<SyncOutcome> {
+/**
+ * Vidage en cours, s'il y en a un.
+ *
+ * L'écran relance la synchronisation dès que le nombre d'attentes change, ce
+ * qui peut déclencher deux vidages qui se chevauchent. Le second remettait
+ * alors à « en cours d'envoi » des écritures que le premier venait de marquer
+ * en échec, et elles s'y figeaient. Une seule à la fois, donc.
+ */
+let vidageEnCours: Promise<SyncOutcome> | null = null;
+
+export function flushOutbox(send: Sender): Promise<SyncOutcome> {
+  vidageEnCours ??= vider(send).finally(() => {
+    vidageEnCours = null;
+  });
+  return vidageEnCours;
+}
+
+async function vider(send: Sender): Promise<SyncOutcome> {
   const entries = await pendingEntries();
   if (entries.length === 0) return { sent: 0, failed: 0 };
 
+  // Le serveur plafonne un lot à 200 opérations et rejette tout au-delà. Une
+  // trésorière restée une semaine sans réseau dépasse ce seuil sans peine :
+  // sans découpage, sa file entière échouerait d'un bloc, indéfiniment.
+  const total: SyncOutcome = { sent: 0, failed: 0 };
+  for (let debut = 0; debut < entries.length; debut += TAILLE_LOT) {
+    const lot = entries.slice(debut, debut + TAILLE_LOT);
+    const resultat = await envoyerLot(lot, send);
+    total.sent += resultat.sent;
+    total.failed += resultat.failed;
+    // Un lot refusé annonce en général une panne : inutile d'insister avec les
+    // suivants, ils repartiront à la prochaine tentative.
+    if (resultat.failed > 0) break;
+  }
+  return total;
+}
+
+/** Plafond appliqué par `POST /api/sync` (`MAX_SYNC_BATCH`). */
+const TAILLE_LOT = 200;
+
+async function envoyerLot(entries: readonly OutboxEntry[], send: Sender): Promise<SyncOutcome> {
   const db = getDb();
   const ids = entries.map((entry) => entry.id).filter((id): id is number => id !== undefined);
   await db.outbox.bulkUpdate(ids.map((id) => ({ key: id, changes: { status: 'sending' } })));

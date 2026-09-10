@@ -40,8 +40,13 @@ export function getSession(): Session | null {
   }
 }
 
-export function openSession(phone: string, displayName = 'Adjovi'): Session {
-  const session: Session = { phone, displayName, since: new Date().toISOString() };
+export function openSession(phone: string, displayName = 'Adjovi', accessToken?: string): Session {
+  const session: Session = {
+    phone,
+    displayName,
+    since: new Date().toISOString(),
+    accessToken,
+  };
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
   return session;
 }
