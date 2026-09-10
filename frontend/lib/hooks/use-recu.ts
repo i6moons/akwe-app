@@ -60,9 +60,7 @@ export function useRecu(groupId: string, transaction: Transaction): Recu {
       try {
         const blob = await genererRecuPng(contenu);
         if (!vivant) return;
-        setFichier(
-          new File([blob], `recu-akwe-${contenu.reference}.png`, { type: 'image/png' }),
-        );
+        setFichier(new File([blob], `recu-akwe-${contenu.reference}.png`, { type: 'image/png' }));
       } catch (erreur) {
         // Sans image, le bouton proposera le texte seul plutôt que rien.
         console.error('AKWÈ : reçu non dessiné', erreur);

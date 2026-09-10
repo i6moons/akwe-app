@@ -35,11 +35,11 @@ export default function CaissesPage() {
         back={false}
       />
 
-      <div className="px-4 pt-6">
+      <div className="px-4 pt-10">
         <label htmlFor="recherche-caisse" className="sr-only">
           Rechercher une caisse
         </label>
-        <div className="bg-surface rounded-card flex items-center gap-3 px-4">
+        <div className="bg-surface flex items-center gap-3 rounded-[8px] px-4">
           <Search className="text-brand-700/80 size-5 shrink-0" aria-hidden />
           <input
             id="recherche-caisse"
@@ -57,6 +57,7 @@ export default function CaissesPage() {
           <SkeletonList rows={3} />
         ) : filtered.length === 0 ? (
           <EmptyState
+            className="rounded-[8px]"
             icon={<Wallet className="size-9" />}
             title={query ? 'Aucune caisse trouvée' : 'Aucune caisse pour le moment'}
             description={
@@ -69,15 +70,7 @@ export default function CaissesPage() {
                 <Button variant="outline" onClick={() => setQuery('')}>
                   Effacer la recherche
                 </Button>
-              ) : (
-                <Link
-                  href={routes.nouvelleCaisse}
-                  className={buttonVariants({ variant: 'primary' })}
-                >
-                  <Plus className="size-5" aria-hidden />
-                  Créer une caisse
-                </Link>
-              )
+              ) : undefined
             }
           />
         ) : (

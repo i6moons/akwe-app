@@ -45,7 +45,7 @@ export function ChampTelephone({
         onBlur={onBlur}
         aria-invalid={Boolean(invalide)}
         aria-describedby={describedBy}
-        className="text-field min-h-14 flex-1 bg-transparent px-4 text-white outline-none placeholder:text-white/50"
+        className="champ-sombre text-field min-h-14 flex-1 bg-transparent px-4 text-white outline-none placeholder:text-white/50"
       />
     </div>
   );

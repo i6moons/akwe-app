@@ -67,7 +67,7 @@ export default function InscriptionPage() {
             setErreur(null);
           }}
           maxLength={60}
-          className="text-field border-brand-500 focus:border-accent-500 min-h-14 rounded-xl border-2 bg-transparent px-4 text-white outline-none placeholder:text-white/50"
+          className="champ-sombre text-field border-brand-500 focus:border-accent-500 min-h-14 rounded-xl border-2 bg-transparent px-4 text-white outline-none placeholder:text-white/50"
         />
 
         <ChampTelephone

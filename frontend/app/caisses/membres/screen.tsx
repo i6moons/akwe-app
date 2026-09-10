@@ -87,15 +87,7 @@ function MembresListe({ id }: { id: string }) {
                 <Button variant="outline" onClick={() => setQuery('')}>
                   Effacer la recherche
                 </Button>
-              ) : (
-                <Link
-                  href={routes.nouveauMembre(id)}
-                  className={buttonVariants({ variant: 'primary' })}
-                >
-                  <Plus className="size-5" aria-hidden />
-                  Ajouter un membre
-                </Link>
-              )
+              ) : undefined
             }
           />
         ) : (

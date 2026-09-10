@@ -115,7 +115,7 @@ export default function ConnexionPage() {
                 setCode(event.target.value.replace(/\D/g, '').slice(0, CODE_LENGTH));
                 setError(null);
               }}
-              className="text-field min-h-14 flex-1 bg-transparent px-4 tracking-[0.3em] text-white outline-none placeholder:tracking-normal placeholder:text-white/50"
+              className="champ-sombre text-field min-h-14 flex-1 bg-transparent px-4 tracking-[0.3em] text-white outline-none placeholder:tracking-normal placeholder:text-white/50"
             />
             <button
               type="button"
