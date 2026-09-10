@@ -5,15 +5,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { History, Home, Menu, Users, Wallet, X } from 'lucide-react';
 import { Sheet } from '@/components/ui/sheet';
-import { routes } from '@/lib/routes';
+import { NAV_LINKS } from '@/lib/nav';
 import { cn } from '@/lib/utils';
 
-const LINKS = [
-  { href: routes.accueil, label: 'Accueil', icon: Home },
-  { href: routes.caisses, label: 'Mes caisses', icon: Wallet },
-  { href: routes.nouvelleCaisse, label: 'Nouvelle caisse', icon: Users },
-  { href: routes.operations, label: 'Historique', icon: History },
-] as const;
+const ICONES = { Home, Wallet, Users, History } as const;
 
 /** Menu latéral ouvert par l'icône « hamburger » présente sur toutes les maquettes. */
 export function NavDrawer() {
@@ -31,7 +26,8 @@ export function NavDrawer() {
         onClick={() => setOpen(true)}
         aria-label="Ouvrir le menu"
         aria-expanded={open}
-        className="size-touch -mr-2 flex items-center justify-end text-white"
+        // Sur grand écran, la barre latérale reste affichée : ce bouton ferait doublon.
+        className="size-touch -mr-2 flex items-center justify-end text-white lg:hidden"
       >
         <Menu className="size-7" />
       </button>
@@ -49,20 +45,23 @@ export function NavDrawer() {
             </button>
           </div>
           <ul className="mt-4 space-y-1">
-            {LINKS.map(({ href, label, icon: Icon }) => (
-              <li key={href}>
-                <Link
-                  href={href}
-                  className={cn(
-                    'min-h-touch flex items-center gap-3 rounded-xl px-3 text-white',
-                    pathname === href ? 'bg-brand-600' : 'hover:bg-brand-700',
-                  )}
-                >
-                  <Icon className="size-5" />
-                  <span className="font-medium">{label}</span>
-                </Link>
-              </li>
-            ))}
+            {NAV_LINKS.map(({ href, label, icon }) => {
+              const Icone = ICONES[icon];
+              return (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    className={cn(
+                      'min-h-touch flex items-center gap-3 rounded-xl px-3 text-white',
+                      pathname === href ? 'bg-brand-600' : 'hover:bg-brand-700',
+                    )}
+                  >
+                    <Icone className="size-5" aria-hidden />
+                    <span className="font-medium">{label}</span>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </Sheet>

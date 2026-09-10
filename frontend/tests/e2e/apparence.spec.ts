@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 /**
- * Ces règles sont faciles à casser sans s'en rendre compte en ajoutant un
- * écran. On les vérifie donc en machine plutôt qu'à l'œil.
+ * Règles d'apparence valables sur tous les gabarits.
+ * Celles qui dépendent de la largeur vivent dans `gabarits.spec.ts`.
  */
 
 /** Les deux seules familles autorisées, dans l'ordre où Next les nomme. */
@@ -29,27 +29,33 @@ test.describe('Apparence', () => {
     }
   });
 
-  test("le bouton d'action reste visible en bas sans faire défiler", async ({ page }) => {
-    await page.goto('/caisses/nouvelle');
+  test('le contenu reste lisible avant même que le JavaScript arrive', async ({ browser }) => {
+    // L'état de départ d'une animation est écrit en style en ligne dans le HTML
+    // du serveur. Une entrée en fondu laissait donc l'application entièrement
+    // invisible tant que le script n'était pas chargé — plusieurs secondes sur
+    // une 3G, et indéfiniment s'il échoue.
+    const contexte = await browser.newContext({ javaScriptEnabled: false });
+    const sansScript = await contexte.newPage();
 
-    const bouton = page.getByRole('button', { name: 'Créer la caisse' });
-    await expect(bouton).toBeInViewport();
+    // Deux passages : le drapeau qui désactive le fondu d'entrée vit dans un
+    // module, et un module survit d'une requête à l'autre côté serveur. La
+    // deuxième visite est donc celle qui compte.
+    for (const chemin of ['/', '/accueil', '/', '/accueil']) {
+      await sansScript.goto(chemin);
+      const titre = sansScript.locator('h1').first();
 
-    const hauteur = page.viewportSize()?.height ?? 0;
-    const boite = await bouton.boundingBox();
-    expect(boite).not.toBeNull();
-    // Le bouton occupe le dernier quart de l'écran : il est sous le pouce.
-    expect(boite!.y).toBeGreaterThan(hauteur * 0.75);
-  });
+      await expect(titre).toBeVisible();
+      expect(await titre.textContent()).toBeTruthy();
 
-  test('le menu latéral se ferme avec la touche Échap', async ({ page }) => {
-    await page.goto('/accueil');
-    await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
+      // `toBeVisible` ne regarde pas l'opacité, et `getComputedStyle` sur le
+      // titre seul ne dit rien de ses ancêtres : un titre opaque dans un
+      // conteneur transparent reste invisible. `checkVisibility` remonte l'arbre.
+      const visible = await titre.evaluate((n) =>
+        n.checkVisibility({ opacityProperty: true, visibilityProperty: true }),
+      );
+      expect(visible, `titre invisible sur ${chemin}`).toBe(true);
+    }
 
-    const menu = page.getByRole('dialog', { name: 'Menu principal' });
-    await expect(menu).toBeVisible();
-
-    await page.keyboard.press('Escape');
-    await expect(menu).toBeHidden();
+    await contexte.close();
   });
 });

@@ -44,13 +44,19 @@ export default function AccueilPage() {
         </m.p>
       </div>
 
-      <m.div variants={stagger} initial="hidden" animate="visible" className="space-y-4 px-4 pt-5">
-        <m.div variants={fadeUp}>
+      <m.div
+        variants={stagger}
+        initial="hidden"
+        animate="visible"
+        className="space-y-4 px-4 pt-5 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0"
+      >
+        <m.div variants={fadeUp} className="lg:col-span-2 lg:min-w-0">
           <BalanceCard total={summary?.totalSavings} monthDelta={summary?.monthDelta} />
         </m.div>
 
         <m.div variants={fadeUp}>
           <StatTiles
+            className="lg:grid-cols-2"
             stats={[
               {
                 value: summary?.activeGroups,
@@ -72,12 +78,12 @@ export default function AccueilPage() {
           />
         </m.div>
 
-        <m.div variants={fadeUp}>
+        <m.div variants={fadeUp} className="lg:col-span-3 lg:min-w-0">
           <SyncIndicator />
         </m.div>
 
-        <m.div variants={fadeUp}>
-          <Card className="space-y-4">
+        <m.div variants={fadeUp} className="lg:col-span-3 lg:min-w-0">
+          <Card className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
             <section className="space-y-3">
               <header className="flex items-center justify-between">
                 <CardTitle className="text-base">Dernière activité</CardTitle>
@@ -107,9 +113,9 @@ export default function AccueilPage() {
                   <ChevronRight className="size-5" aria-hidden />
                 </Link>
               ) : (
-                <StaggerList className="no-scrollbar flex gap-3 overflow-x-auto pb-1">
+                <StaggerList className="no-scrollbar flex gap-3 overflow-x-auto pb-1 lg:grid lg:grid-cols-2 lg:overflow-visible">
                   {rows.map((row) => (
-                    <StaggerItem key={row.group.id} className="w-44 shrink-0">
+                    <StaggerItem key={row.group.id} className="w-44 shrink-0 lg:w-auto">
                       <GroupMiniCard {...row} />
                     </StaggerItem>
                   ))}

@@ -60,7 +60,10 @@ export default function NouvelleCaissePage() {
     <main className="safe-bottom flex min-h-dvh flex-col pb-6">
       <AppHeader title="Création d'une caisse" centered />
 
-      <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-1 flex-col px-4">
+      <form
+        onSubmit={(event) => void handleSubmit(event)}
+        className="flex flex-1 flex-col px-4 lg:mx-auto lg:w-full lg:max-w-2xl"
+      >
         <Card className="space-y-5">
           <CardTitle className="text-base">Informations</CardTitle>
 

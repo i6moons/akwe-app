@@ -14,6 +14,12 @@ export interface Session {
   phone: string;
   displayName: string;
   since: string;
+  /**
+   * Jeton signé à présenter à l'API. Absent tant que l'authentification réelle
+   * n'est pas branchée : `lib/auth/token.ts` retombe alors sur celui de
+   * démonstration.
+   */
+  accessToken?: string;
 }
 
 export function getSession(): Session | null {
@@ -27,6 +33,7 @@ export function getSession(): Session | null {
       phone: parsed.phone,
       displayName: typeof parsed.displayName === 'string' ? parsed.displayName : 'Adjovi',
       since: typeof parsed.since === 'string' ? parsed.since : new Date().toISOString(),
+      accessToken: typeof parsed.accessToken === 'string' ? parsed.accessToken : undefined,
     };
   } catch {
     return null;

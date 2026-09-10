@@ -16,6 +16,19 @@ L'application fonctionne **sans backend** : au premier lancement, une caisse de
 démonstration (« Tontine Ayaba », Godomey, 12 membres, 8 semaines d'historique)
 est écrite dans IndexedDB.
 
+## Vercel
+
+Root Directory du projet : **`frontend`**. Fichier [`vercel.json`](./vercel.json).
+
+Importer le dépôt : [vercel.com/new](https://vercel.com/new) → `i6moons/akwe-app` →
+Root Directory = `frontend`.
+
+Variables (pitch) :
+
+- `NEXT_PUBLIC_DEMO_MODE` = `true` — démo hors ligne, sans clé
+- Plus tard : `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+  `SUPABASE_SERVICE_ROLE_KEY` (serveur uniquement)
+
 ## Commandes
 
 | Commande               | Effet                                            |
@@ -67,6 +80,47 @@ il est ancré en bas de l'écran, au-dessus de la zone sûre iOS, quelle que soi
 longueur du formulaire. Les liens de navigation et les filtres restent dans le
 flux de la page.
 
+À partir de `lg`, ce raisonnement tombe : la souris atteint tout l'écran, et une
+barre collée en bas de fenêtre, loin du formulaire, perd son lien avec lui. Le
+bouton reprend alors sa place dans le flux, sous les champs.
+
+## Grands écrans
+
+L'application reste pensée pour le téléphone, mais elle sera ouverte sur un
+portable — ne serait-ce que pour la démonstration, projetée. Sans traitement,
+une carte s'étirait sur 1400 px et un champ destiné à recevoir « 2000 » en
+faisait mille.
+
+`layout/app-shell.tsx` pose la coquille : barre latérale permanente
+(`layout/side-nav.tsx`) et contenu borné à `max-w-4xl`. Elle vit dans les
+fournisseurs, donc dans `layout.tsx` et non `template.tsx` : la barre ne doit ni
+se remonter ni se refondre à chaque navigation, seul le contenu change. Les
+écrans d'ouverture et d'authentification en sont exclus (`lib/nav.ts`), ils
+occupent tout l'écran.
+
+Le tiroir des téléphones et la barre latérale lisent la même liste de
+destinations. Au-delà de `lg`, le bouton hamburger disparaît : il ferait doublon.
+
+Deux pièges rencontrés, à ne pas réintroduire :
+
+- Une grille CSS dimensionne ses pistes sur le contenu (`min-width: auto`). Poser
+  `grid` sur un conteneur qui abrite une liste défilante horizontale élargit la
+  piste et rend toute la page décalable latéralement. Le tableau de bord garde
+  donc `space-y` jusqu'à `lg`, et ses éléments portent `lg:min-w-0`.
+- Une liste en deux colonnes n'est pas toujours un gain : à 1024 px, une ligne de
+  caisse cassait son nom et son solde sur trois lignes. Elle ne passe en grille
+  qu'à `xl`.
+- Un voisin en `flex-1` remplit la hauteur de l'écran. Tant que la barre d'action
+  était en position fixe, cela ne se voyait pas ; une fois revenue dans le flux,
+  elle se retrouvait rejetée tout en bas, détachée de ce qu'elle valide. Ces
+  conteneurs portent donc `lg:flex-none`.
+
+Les écrans d'ouverture et d'authentification n'ont pas de navigation, mais
+gardent une largeur de lecture : six cases de code réparties sur toute la fenêtre
+ne se lisent plus comme un code. L'écran d'ouverture fait exception dans
+`lib/nav.ts` — il peint ses diagonales d'un bord à l'autre et resserre lui-même
+sa colonne centrale, sinon son fond serait découpé en bande.
+
 ## Animations
 
 `framer-motion` est chargé via `LazyMotion` et les composants `m` (voir
@@ -75,6 +129,21 @@ une 3G. `MotionConfig reducedMotion="user"` respecte le réglage système.
 
 Rien qui bouge en boucle ne doit déplacer une cible tactile : sur l'écran
 d'ouverture, c'est un halo qui pulse derrière le bouton, pas le bouton.
+
+**Aucun état de départ ne met l'opacité à zéro.** `framer-motion` écrit l'état
+`initial` en style en ligne dans le HTML rendu par le serveur : une entrée en
+fondu laisse la page entièrement invisible tant que le JavaScript n'est pas
+arrivé, et définitivement s'il échoue. Le mouvement seul suffit à donner
+l'impression d'arrivée et se dégrade proprement. Seuls les éléments purement
+décoratifs, comme le halo de l'écran d'ouverture, animent leur opacité.
+
+Le fondu entre les écrans fait exception, mais il est sauté au tout premier
+affichage : `app/template.tsx` garde un drapeau au niveau du module, qui
+distingue l'arrivée sur le site des navigations suivantes.
+
+`apparence.spec.ts` charge l'application avec `javaScriptEnabled: false` et lit
+l'opacité calculée des titres. Attention : `toBeVisible()` de Playwright ne
+regarde pas l'opacité, il faut la vérifier soi-même.
 
 ## Retours à l'utilisatrice
 
