@@ -17,8 +17,7 @@ import { parseAmount } from '@/lib/format';
 import { FREQUENCY_LABELS, type Frequency } from '@/lib/types';
 import { routes } from '@/lib/routes';
 
-const CHAMP =
-  '!h-[43px] !min-h-[43px] !rounded-[6px] border border-brand-600 !bg-transparent';
+const CHAMP = '!h-[43px] !min-h-[43px] !rounded-[6px] border border-brand-600 !bg-transparent';
 
 /** Maquette « iPhone 17 - 6 » — création d'une caisse. */
 export default function NouvelleCaissePage() {

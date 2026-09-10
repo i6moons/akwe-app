@@ -43,11 +43,7 @@ export default function MotDePassePage() {
     setEnCours(true);
     setErreur(null);
 
-    const echec = await sInscrire(
-      inscription.phone,
-      inscription.fullName,
-      code.replace(/\D/g, ''),
-    );
+    const echec = await sInscrire(inscription.phone, inscription.fullName, code.replace(/\D/g, ''));
     if (echec === null) {
       router.replace(routes.inscriptionReussie);
       return;
