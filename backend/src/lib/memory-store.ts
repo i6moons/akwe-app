@@ -3,32 +3,18 @@
  * Même sémantique d'idempotence que `client_uuid` en base.
  */
 
-export interface StoredGroup {
-  id: string;
-  name: string;
-  owner_id: string | null;
-  contribution_amount: number;
-  frequency: string;
+import type { GroupRow, MemberRow, TransactionRow } from '../sync/normalize';
+
+export interface StoredGroup extends GroupRow {
   client_uuid: string;
 }
 
-export interface StoredMember {
-  id: string;
-  group_id: string;
-  full_name: string;
-  phone: string | null;
+export interface StoredMember extends MemberRow {
   client_uuid: string;
 }
 
-export interface StoredTransaction {
+export interface StoredTransaction extends TransactionRow {
   id: string;
-  group_id: string;
-  member_id: string | null;
-  amount: number;
-  type: string;
-  source: string;
-  client_uuid: string;
-  occurred_at: string;
   synced_at: string;
 }
 
@@ -37,19 +23,21 @@ class MemoryStore {
   members = new Map<string, StoredMember>();
   transactions = new Map<string, StoredTransaction>();
 
+  /**
+   * Équivalent de `insert … on conflict (client_uuid) do update`.
+   *
+   * Le `client_uuid` est la clé de la table : le rejeu écrase la même entrée au
+   * lieu d'en créer une seconde. L'identifiant déjà attribué est conservé, un
+   * rejeu ne devant jamais renuméroter une ligne existante.
+   */
   upsertByClientUuid<T extends { id: string; client_uuid: string }>(
     table: Map<string, T>,
     row: T,
   ): T {
-    for (const [key, existing] of table) {
-      if (existing.client_uuid === row.client_uuid) {
-        const merged = { ...existing, ...row, id: existing.id };
-        table.set(key, merged);
-        return merged;
-      }
-    }
-    table.set(row.client_uuid, row);
-    return row;
+    const existing = table.get(row.client_uuid);
+    const merged = existing ? { ...existing, ...row, id: existing.id } : row;
+    table.set(row.client_uuid, merged);
+    return merged;
   }
 }
 

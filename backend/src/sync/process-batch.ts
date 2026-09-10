@@ -1,152 +1,96 @@
 import { randomUUID } from 'node:crypto';
-import type { SyncBatchItem, SyncRequest, SyncResponse } from '../../contracts/api';
+import type { SyncRequest, SyncResponse } from '../../contracts/api';
 import { getMemoryStore } from '../lib/memory-store';
-import { createServiceClient, hasSupabase } from '../lib/supabase';
+import { createServiceClient, type AkweSupabase } from '../lib/supabase';
+import { normalizeItem, readClientUuid, type NormalizedItem } from './normalize';
 
-function asRecord(value: unknown): Record<string, unknown> {
-  return value !== null && typeof value === 'object' ? (value as Record<string, unknown>) : {};
-}
+type Written = { ok: true } | { ok: false; reason: string };
 
-function str(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() ? value.trim() : null;
-}
+/**
+ * Une caisse avant ses membres, les membres avant les cotisations.
+ *
+ * Une trésorière hors ligne crée sa caisse, y inscrit ses membres puis note des
+ * versements : le tout remonte dans un même lot. Écrire dans l'ordre d'arrivée
+ * ne garantissait rien, et une cotisation traitée avant sa caisse violait la
+ * clé étrangère — l'opération était rejetée puis renvoyée indéfiniment.
+ */
+const ENTITY_ORDER: Readonly<Record<NormalizedItem['entity'], number>> = {
+  group: 0,
+  member: 1,
+  transaction: 2,
+};
 
-function intAmount(value: unknown): number | null {
-  if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) return null;
-  return value;
-}
-
-async function upsertSupabase(
-  item: SyncBatchItem,
-): Promise<{ ok: true } | { ok: false; reason: string }> {
-  const supabase = createServiceClient();
-  if (!supabase) return { ok: false, reason: 'Supabase non configuré' };
-
-  const payload = asRecord(item.payload);
-
+async function writeSupabase(supabase: AkweSupabase, item: NormalizedItem): Promise<Written> {
   if (item.entity === 'group') {
-    const name = str(payload.name) ?? str(payload.full_name);
-    const amount = intAmount(payload.contribution_amount ?? payload.contributionAmount);
-    const frequency = str(payload.frequency) ?? 'weekly';
-    if (!name || amount === null) return { ok: false, reason: 'Groupe invalide' };
-
-    const { error } = await supabase.from('groups').upsert(
-      {
-        id: str(payload.id) ?? undefined,
-        name,
-        contribution_amount: amount,
-        frequency,
-        owner_id: str(payload.owner_id) ?? str(payload.ownerId),
-        location: str(payload.location),
-      },
-      { onConflict: 'id' },
-    );
+    const { error } = await supabase.from('groups').upsert(item.row, { onConflict: 'id' });
     return error ? { ok: false, reason: error.message } : { ok: true };
   }
 
   if (item.entity === 'member') {
-    const groupId = str(payload.group_id) ?? str(payload.groupId);
-    const fullName = str(payload.full_name) ?? str(payload.fullName);
-    if (!groupId || !fullName) return { ok: false, reason: 'Membre invalide' };
-
-    const { error } = await supabase.from('members').upsert(
-      {
-        id: str(payload.id) ?? undefined,
-        group_id: groupId,
-        full_name: fullName,
-        phone: str(payload.phone),
-      },
-      { onConflict: 'id' },
-    );
+    const { error } = await supabase.from('members').upsert(item.row, { onConflict: 'id' });
     return error ? { ok: false, reason: error.message } : { ok: true };
   }
 
-  const groupId = str(payload.group_id) ?? str(payload.groupId);
-  const amount = intAmount(payload.amount);
-  const type = str(payload.type) ?? 'contribution';
-  if (!groupId || amount === null) return { ok: false, reason: 'Transaction invalide' };
-
-  const { error } = await supabase.from('transactions').upsert(
-    {
-      client_uuid: item.client_uuid,
-      group_id: groupId,
-      member_id: str(payload.member_id) ?? str(payload.memberId),
-      amount,
-      type,
-      source: str(payload.source) ?? 'manual',
-      method: str(payload.method) ?? 'cash',
-      raw_transcript: str(payload.raw_transcript) ?? str(payload.rawTranscript),
-      occurred_at: str(payload.occurred_at) ?? str(payload.occurredAt) ?? new Date().toISOString(),
-      synced_at: new Date().toISOString(),
-    },
-    { onConflict: 'client_uuid' },
-  );
+  const { error } = await supabase
+    .from('transactions')
+    .upsert({ ...item.row, synced_at: new Date().toISOString() }, { onConflict: 'client_uuid' });
   return error ? { ok: false, reason: error.message } : { ok: true };
 }
 
-function upsertMemory(item: SyncBatchItem): { ok: true } | { ok: false; reason: string } {
+function writeMemory(item: NormalizedItem): Written {
   const store = getMemoryStore();
-  const payload = asRecord(item.payload);
 
   if (item.entity === 'group') {
-    const name = str(payload.name);
-    const amount = intAmount(payload.contribution_amount ?? payload.contributionAmount);
-    if (!name || amount === null) return { ok: false, reason: 'Groupe invalide' };
-    store.upsertByClientUuid(store.groups, {
-      id: str(payload.id) ?? randomUUID(),
-      name,
-      owner_id: str(payload.owner_id) ?? str(payload.ownerId),
-      contribution_amount: amount,
-      frequency: str(payload.frequency) ?? 'weekly',
-      client_uuid: item.client_uuid,
-    });
+    store.upsertByClientUuid(store.groups, { ...item.row, client_uuid: item.client_uuid });
     return { ok: true };
   }
 
   if (item.entity === 'member') {
-    const groupId = str(payload.group_id) ?? str(payload.groupId);
-    const fullName = str(payload.full_name) ?? str(payload.fullName);
-    if (!groupId || !fullName) return { ok: false, reason: 'Membre invalide' };
-    store.upsertByClientUuid(store.members, {
-      id: str(payload.id) ?? randomUUID(),
-      group_id: groupId,
-      full_name: fullName,
-      phone: str(payload.phone),
-      client_uuid: item.client_uuid,
-    });
+    store.upsertByClientUuid(store.members, { ...item.row, client_uuid: item.client_uuid });
     return { ok: true };
   }
 
-  const groupId = str(payload.group_id) ?? str(payload.groupId);
-  const amount = intAmount(payload.amount);
-  if (!groupId || amount === null) return { ok: false, reason: 'Transaction invalide' };
-
   store.upsertByClientUuid(store.transactions, {
-    id: str(payload.id) ?? randomUUID(),
-    group_id: groupId,
-    member_id: str(payload.member_id) ?? str(payload.memberId),
-    amount,
-    type: str(payload.type) ?? 'contribution',
-    source: str(payload.source) ?? 'manual',
-    client_uuid: item.client_uuid,
-    occurred_at: str(payload.occurred_at) ?? str(payload.occurredAt) ?? new Date().toISOString(),
+    ...item.row,
+    id: randomUUID(),
     synced_at: new Date().toISOString(),
   });
   return { ok: true };
 }
 
-/** Traite un lot de sync. Idempotent via `client_uuid`. */
+/**
+ * Traite un lot de sync. Idempotent via `client_uuid` : rejouer un lot déjà
+ * traité laisse la base dans le même état et reconfirme les mêmes entrées.
+ */
 export async function processSyncBatch(request: SyncRequest): Promise<SyncResponse> {
   const confirmed: string[] = [];
   const rejected: NonNullable<SyncResponse['rejected']> = [];
 
-  for (const item of request.batch) {
-    if (!item.client_uuid?.trim()) {
-      rejected.push({ client_uuid: item.client_uuid ?? '', reason: 'client_uuid manquant' });
+  const accepted: NormalizedItem[] = [];
+  // Un même `client_uuid` peut apparaître deux fois dans une file rejouée :
+  // l'écrire deux fois serait sans effet, mais le confirmer deux fois ferait
+  // croire au client qu'il a envoyé plus d'opérations qu'il n'en avait.
+  const seen = new Set<string>();
+
+  for (const raw of request.batch) {
+    const result = normalizeItem(raw);
+    if (!result.ok) {
+      rejected.push({ client_uuid: readClientUuid(raw), reason: result.reason });
       continue;
     }
+    if (seen.has(result.item.client_uuid)) continue;
+    seen.add(result.item.client_uuid);
+    accepted.push(result.item);
+  }
 
-    const result = hasSupabase() ? await upsertSupabase(item) : upsertMemory(item);
+  accepted.sort((left, right) => ENTITY_ORDER[left.entity] - ENTITY_ORDER[right.entity]);
+
+  // Un seul client pour tout le lot : il en naissait un par opération, soit
+  // deux cents instanciations pour un lot plein.
+  const supabase = createServiceClient();
+
+  for (const item of accepted) {
+    const result = supabase ? await writeSupabase(supabase, item) : writeMemory(item);
     if (result.ok) confirmed.push(item.client_uuid);
     else rejected.push({ client_uuid: item.client_uuid, reason: result.reason });
   }

@@ -150,3 +150,21 @@ jobs:
             echo "→ $file"
             psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$file"
           done
+
+  backend:
+    name: Types et tests (backend)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - name: Types et tests
+        run: npm run verify
