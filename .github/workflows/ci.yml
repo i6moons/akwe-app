@@ -127,7 +127,10 @@ jobs:
         env:
           PGPASSWORD: akwe
         run: |
-          for file in supabase/migrations/0001_init.sql; do
+          # Toutes les migrations, dans l'ordre. N'appliquer que `0001` laissait
+          # `0002` à `0004` sans aucune validation : la base hébergée s'est ainsi
+          # retrouvée sans les colonnes et la contrainte que le code attend.
+          for file in supabase/migrations/*.sql; do
             echo "→ $file"
             psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$file"
           done
