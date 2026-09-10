@@ -1,22 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { CalendarDays, Check, CircleCheck, Landmark, Send, User } from 'lucide-react';
+import { CalendarDays, Check, CircleCheck, Landmark, Send, Share2, User } from 'lucide-react';
 import { NavDrawer } from '@/components/layout/nav-drawer';
 import { Card, CardPanel, InfoRow } from '@/components/ui/card';
-import { buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { StatusLine } from '@/components/operation/status-line';
-import { getDb } from '@/lib/db/schema';
+import { FieldError } from '@/components/ui/field';
+import { useRecu, SOURCE_LABELS } from '@/lib/hooks/use-recu';
+import { construireMessageRecu, lienWhatsApp } from '@/lib/recu/message';
+import { partagerRecu } from '@/lib/recu/partage';
 import { formatDateLong, formatSigned } from '@/lib/format';
 import { directionOf, operationMeta, type Transaction } from '@/lib/types';
 import { routes } from '@/lib/routes';
-
-const SOURCE_LABELS = {
-  voice: 'Saisie vocale',
-  manual: 'Saisie manuelle',
-  payment_webhook: 'Mobile money',
-} as const;
 
 /** Maquette « iPhone 17 - 20 » — confirmation d'enregistrement et envoi du reçu. */
 export function SuccessStep({
@@ -26,14 +23,29 @@ export function SuccessStep({
   groupId: string;
   transaction: Transaction;
 }) {
-  const [memberName, setMemberName] = useState<string | null>(null);
+  const { donnees, fichier, phone } = useRecu(groupId, transaction);
+  const [note, setNote] = useState<string | null>(null);
+  const [erreur, setErreur] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!transaction.memberId) return;
-    void getDb()
-      .members.get(transaction.memberId)
-      .then((member) => setMemberName(member?.fullName ?? null));
-  }, [transaction.memberId]);
+  async function transferer(): Promise<void> {
+    if (!donnees) return;
+    setErreur(null);
+    const texte = construireMessageRecu(donnees);
+
+    // Le dessin a échoué : on part avec le texte seul plutôt que de bloquer la
+    // trésorière, qui a un membre devant elle qui attend sa preuve.
+    if (!fichier) {
+      window.open(lienWhatsApp(phone, texte), '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    const resultat = await partagerRecu(fichier, texte, phone);
+    if (resultat === 'telecharge') {
+      setNote('Reçu enregistré dans vos images. Joignez-le à la conversation WhatsApp ouverte.');
+    } else if (resultat === 'echec') {
+      setErreur("Le partage n'a pas abouti. Réessayez.");
+    }
+  }
 
   return (
     <main className="safe-bottom min-h-dvh pb-8">
@@ -67,7 +79,7 @@ export function SuccessStep({
             <InfoRow
               icon={<User className="size-5" />}
               label="Membre :"
-              value={memberName ?? '—'}
+              value={donnees?.membre ?? '—'}
             />
             <InfoRow
               icon={<Landmark className="size-5" />}
@@ -90,20 +102,28 @@ export function SuccessStep({
             <div className="border-line border-t pt-3">
               <StatusLine
                 icon={<Send className="text-brand-700 size-5" />}
-                title="Reçu envoyé"
-                description="Le reçu a été envoyé au membre (si numéro disponible)"
+                title="Transfert de reçu"
+                description={
+                  phone
+                    ? 'Envoyez le reçu au membre par WhatsApp, en image.'
+                    : "Ce membre n'a pas de numéro : vous choisirez le destinataire."
+                }
               />
             </div>
           </CardPanel>
 
-          <Link href={routes.historique(groupId)} className={buttonVariants({ size: 'lg' })}>
-            Voir l&apos;opération
-          </Link>
+          {note ? <p className="text-muted text-sm">{note}</p> : null}
+          <FieldError id="erreur-recu" message={erreur} />
+
+          <Button size="lg" onClick={() => void transferer()} disabled={!donnees}>
+            <Share2 className="size-5" aria-hidden />
+            Transférer le reçu
+          </Button>
           <Link
-            href={routes.accueil}
+            href={routes.historique(groupId)}
             className={buttonVariants({ variant: 'outline', size: 'lg' })}
           >
-            Retour à l&apos;accueil
+            Voir l&apos;opération
           </Link>
         </Card>
       </div>

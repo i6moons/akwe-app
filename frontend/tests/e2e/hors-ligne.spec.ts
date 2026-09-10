@@ -46,7 +46,9 @@ test.describe('Mode hors ligne', () => {
     // L'écran de reçu s'affiche alors qu'aucun réseau n'est disponible.
     await expect(page.getByText('+ 2 000 FCFA')).toBeVisible();
     await expect(page.getByText('Enregistrée', { exact: true })).toBeVisible();
-    await expect(page.getByText('Reçu envoyé', { exact: true })).toBeVisible();
+    await expect(page.getByText('Transfert de reçu', { exact: true })).toBeVisible();
+    // Le reçu se dessine sur l'appareil : le transfert reste proposé sans réseau.
+    await expect(page.getByRole('button', { name: 'Transférer le reçu' })).toBeEnabled();
 
     await context.setOffline(false);
   });

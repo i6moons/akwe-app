@@ -13,7 +13,9 @@ const OUT = 'captures';
 const PAGES = [
   ['01-splash', '/'],
   ['02-connexion', '/connexion'],
-  ['03-verification', '/verification'],
+  ['03-inscription', '/inscription'],
+  ['03b-mot-de-passe', '/mot-de-passe'],
+  ['03c-inscription-succes', '/inscription/succes'],
   ['04-accueil', '/accueil'],
   ['05-caisses', '/caisses'],
   ['06-caisse-nouvelle', '/caisses/nouvelle'],

@@ -3,9 +3,9 @@
 /**
  * Session locale de la trésorière.
  *
- * L'authentification réelle (téléphone + PIN, Supabase) est du ressort du lead
- * technique. Le front conserve ici uniquement de quoi ouvrir l'application hors
- * ligne : le numéro et le prénom affiché. Aucun secret n'est stocké.
+ * On ne garde ici que de quoi ouvrir l'application hors ligne : le numéro, le
+ * nom affiché, et le jeton signé par Supabase. Le code fixe n'est jamais
+ * conservé — un téléphone se prête, et il ne doit rien laisser lire.
  */
 
 const STORAGE_KEY = 'akwe.session';
@@ -64,25 +64,40 @@ export function openSession(
   return session;
 }
 
-/** Met à jour le nom affiché sans toucher au jeton ni rouvrir la session. */
-export function renommerSession(displayName: string): void {
-  const session = getSession();
-  if (!session) return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...session, displayName }));
-}
-
 export function closeSession(): void {
   window.localStorage.removeItem(STORAGE_KEY);
 }
 
-/** Numéro en attente de vérification, transmis entre l'écran de connexion et l'OTP. */
-const PENDING_KEY = 'akwe.pending-phone';
+/**
+ * Inscription en cours, le temps de passer du formulaire au choix du code.
+ *
+ * En `sessionStorage` et non en `localStorage` : une inscription abandonnée ne
+ * doit pas ressurgir des semaines plus tard sur l'écran du code.
+ */
+const INSCRIPTION_KEY = 'akwe.inscription';
 
-export function setPendingPhone(phone: string): void {
-  window.sessionStorage.setItem(PENDING_KEY, phone);
+export interface Inscription {
+  phone: string;
+  fullName: string;
 }
 
-export function getPendingPhone(): string | null {
+export function setInscription(inscription: Inscription): void {
+  window.sessionStorage.setItem(INSCRIPTION_KEY, JSON.stringify(inscription));
+}
+
+export function getInscription(): Inscription | null {
   if (typeof window === 'undefined') return null;
-  return window.sessionStorage.getItem(PENDING_KEY);
+  const raw = window.sessionStorage.getItem(INSCRIPTION_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Partial<Inscription>;
+    if (typeof parsed.phone !== 'string' || typeof parsed.fullName !== 'string') return null;
+    return { phone: parsed.phone, fullName: parsed.fullName };
+  } catch {
+    return null;
+  }
+}
+
+export function clearInscription(): void {
+  window.sessionStorage.removeItem(INSCRIPTION_KEY);
 }
