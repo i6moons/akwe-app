@@ -49,18 +49,43 @@ MCP Cursor : [`.cursor/mcp.json`](../.cursor/mcp.json) (lecture seule, scoped
 à ce projet). Dans Cursor : **Settings → Tools & MCP → supabase → Enable**,
 puis **Login**.
 
-SQL Editor (rôle postgres), dans l'ordre, **une seule fois** :
+SQL Editor (rôle postgres), dans l'ordre :
 
-1. `supabase/migrations/0001_init.sql` — schéma
-2. `supabase/migrations/0002_rls.sql` — politiques RLS (rejouable : DROP IF EXISTS)
-3. `supabase/seed.sql` — Tontine Ayaba, solde attendu **174 000 F**
+1. `0001_init.sql` — schéma
+2. `0002_rls.sql` — politiques RLS
+3. `0003_profils.sql` — raccord entre Supabase Auth et `public.users`
+4. `0004_colonnes_manquantes.sql` — colonnes et contraintes d'une base montée avant `0001`
+5. `0005_owner_id_obligatoire.sql` — `groups.owner_id` non nul
 
-Le projet hébergé a déjà reçu le schéma + le seed. Relancer `0002` est sans
-danger : les politiques existantes sont remplacées, pas dupliquées.
+**Toutes sont rejouables** : les relancer sur une base déjà conforme ne la modifie
+pas. Le job CI `sql` les applique dans cet ordre sur un PostgreSQL 16 neuf à
+chaque poussée, ce qui est la seule garantie qu'elles décrivent bien la base.
 
-Vérification après le seed :
+`supabase/seed.sql` est **optionnel** : il crée la Tontine Ayaba de démonstration
+(caisse `a0000000-…-0010`, sept membres, solde 174 000 F). Ne l'appliquez pas sur
+une base qui porte déjà de vraies caisses — il y mêlerait des données fictives.
+
+### État du projet hébergé
+
+Au 10 septembre 2026, il porte de **vraies données d'usage**, créées depuis
+l'application, et non le seed :
+
+| Caisse | Membres | Opérations | Solde |
+| --- | --- | --- | --- |
+| Tontine du marché | 1 | 0 | 0 F |
+| Ifah | 2 | 1 | 1 000 F |
+| Tontine Ayaba | 1 | 2 | 12 000 F |
+| Hello | 0 | 0 | 0 F |
+| **total** | **4** | **3** | **13 000 F** |
+
+Le seed n'y a jamais été appliqué : la caisse `a0000000-…-0010` qu'il crée est
+absente, et la « Tontine Ayaba » ci-dessus porte un autre identifiant. Ce README
+annonçait pourtant un solde de 174 000 F et donnait la requête ci-dessous comme
+vérification d'installation : elle ne vaut que sur une base fraîchement seedée, et
+échouait sur le projet hébergé.
 
 ```sql
+-- Sur une base fraîchement seedée uniquement.
 select coalesce(sum(case
   when type = 'contribution' then amount
   else -amount end), 0) as solde
@@ -93,6 +118,9 @@ Next) **ou** pointer vers `http://127.0.0.1:3460` pour le serveur autonome.
 - **Types d'opération** contrôlés contre la contrainte `check` avant l'envoi en
   base : une valeur hors liste est rejetée avec une phrase lisible.
 - **RLS** : une trésorière ne voit que ses caisses.
+- **Une caisse a toujours une propriétaire.** Toutes les politiques RLS passent par
+  `groups.owner_id` : une caisse sans propriétaire serait invisible de tous, même
+  de celle qui l'a créée. La base la refuse donc à l'écriture (`0005`).
 - **Voix** : jamais inventer un montant ; `amount: null` si doute. La réponse du
   modèle distant est revalidée, nom du membre compris.
 
