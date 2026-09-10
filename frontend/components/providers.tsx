@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { seedDemoData } from '@/lib/db/seed';
+import { preparerCarnet } from '@/lib/db/preparer';
 import { MotionProvider } from '@/components/ui/motion';
 import { ToastProvider } from '@/components/ui/toast';
 import { AppShell } from '@/components/layout/app-shell';
@@ -17,13 +17,15 @@ export function AppProviders({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
 
-    void seedDemoData()
-      .catch((error: unknown) => {
-        console.error('AKWÈ : amorçage des données de démonstration impossible', error);
-      })
-      .finally(() => {
-        if (!cancelled) setReady(true);
-      });
+    // Le carnet local s'affiche sans attendre le serveur. La relecture se fait
+    // en arrière-plan et complète l'écran quand elle arrive : la faire attendre
+    // laissait la trésorière devant des tirets pendant plusieurs secondes, pour
+    // des données qu'elle avait déjà sur son téléphone.
+    setReady(true);
+
+    void preparerCarnet().catch((error: unknown) => {
+      if (!cancelled) console.error('AKWÈ : préparation du carnet impossible', error);
+    });
 
     if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
       navigator.serviceWorker.register('/sw.js').catch((error: unknown) => {

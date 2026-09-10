@@ -1,7 +1,14 @@
 import { parseAmount } from '@/lib/format';
 
 export const MAX_SYNC_BATCH = 200;
-export const ALLOWED_TYPES = ['contribution', 'payout', 'loan'] as const;
+
+/**
+ * Les cinq types que l'application sait produire, et que la contrainte `check`
+ * de la table accepte. En omettre revenait à rejeter des opérations parfaitement
+ * valides : la reconnaissance vocale détecte « a remboursé » et « frais », et la
+ * trésorière aurait vu ces saisies rester indéfiniment « en attente ».
+ */
+export const ALLOWED_TYPES = ['contribution', 'payout', 'loan', 'repayment', 'fee'] as const;
 export type AllowedSyncType = (typeof ALLOWED_TYPES)[number];
 
 export interface SyncContext {

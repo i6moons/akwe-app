@@ -7,8 +7,10 @@ import { Wordmark } from '@/components/brand/wordmark';
 import { Button } from '@/components/ui/button';
 import { FixedAction } from '@/components/ui/fixed-action';
 import { OtpInput, OTP_LENGTH } from '@/components/auth/otp-input';
+import { FieldError } from '@/components/ui/field';
 import { formatPhone } from '@/lib/format';
-import { getPendingPhone, openSession } from '@/lib/auth/session';
+import { getPendingPhone } from '@/lib/auth/session';
+import { seConnecter } from '@/lib/auth/connexion';
 import { routes } from '@/lib/routes';
 
 const EXPIRY_SECONDS = 300;
@@ -19,6 +21,8 @@ export default function VerificationPage() {
   const [code, setCode] = useState('');
   const [phone, setPhone] = useState<string | null>(null);
   const [remaining, setRemaining] = useState(EXPIRY_SECONDS);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [enCours, setEnCours] = useState(false);
 
   useEffect(() => {
     const pending = getPendingPhone();
@@ -38,11 +42,23 @@ export default function VerificationPage() {
   const minutes = Math.floor(remaining / 60);
   const seconds = `${remaining % 60}`.padStart(2, '0');
 
-  function handleSubmit(): void {
-    if (!complete || !phone) return;
-    // La vérification réelle du code est faite côté serveur par le lead technique.
-    openSession(phone);
-    router.replace(routes.accueil);
+  async function handleSubmit(): Promise<void> {
+    if (!complete || !phone || enCours) return;
+    setEnCours(true);
+    setErreur(null);
+
+    const echec = await seConnecter(phone, code.replace(/\D/g, ''));
+    if (echec === null) {
+      router.replace(routes.accueil);
+      return;
+    }
+
+    setEnCours(false);
+    setErreur(
+      echec === 'code'
+        ? 'Ce code ne correspond pas à ce numéro.'
+        : 'Connexion impossible. Vérifiez votre réseau.',
+    );
   }
 
   return (
@@ -65,7 +81,18 @@ export default function VerificationPage() {
       </p>
 
       <div className="pt-3">
-        <OtpInput value={code} onChange={setCode} disabled={remaining === 0} />
+        <OtpInput
+          value={code}
+          onChange={(valeur) => {
+            setCode(valeur);
+            setErreur(null);
+          }}
+          disabled={remaining === 0 || enCours}
+        />
+      </div>
+
+      <div className="pt-3">
+        <FieldError id="erreur-code" message={erreur} />
       </div>
 
       <div className="flex flex-col items-center gap-3 pt-8">
@@ -87,8 +114,8 @@ export default function VerificationPage() {
       </div>
 
       <FixedAction>
-        <Button size="lg" onClick={handleSubmit} disabled={!complete}>
-          Suivant
+        <Button size="lg" onClick={() => void handleSubmit()} disabled={!complete || enCours}>
+          {enCours ? 'Connexion…' : 'Suivant'}
         </Button>
       </FixedAction>
     </main>

@@ -1,4 +1,5 @@
 import { getDb } from '@/lib/db/schema';
+import { enqueue } from '@/lib/sync/outbox';
 import { clientUuid } from '@/lib/utils';
 import type { Group, Member, Transaction, TransactionType } from '@/lib/types';
 
@@ -8,9 +9,16 @@ import type { Group, Member, Transaction, TransactionType } from '@/lib/types';
  * « test1 / membre2 » coûte des points devant un jury local.
  */
 
-const GROUPS: readonly Omit<Group, 'createdAt'>[] = [
+/**
+ * Les identifiants sont tirés au moment de l'amorçage, pas écrits ici.
+ *
+ * Les colonnes `id` de Supabase sont de type `uuid` : une valeur comme
+ * « grp-ayaba » y est refusée. Toute opération saisie sur une caisse de
+ * démonstration serait alors rejetée par le serveur, et resterait « en
+ * attente » sans que rien n'explique pourquoi.
+ */
+const GROUPS: readonly Omit<Group, 'createdAt' | 'id'>[] = [
   {
-    id: 'grp-ayaba',
     name: 'Tontine Ayaba',
     contributionAmount: 2000,
     frequency: 'weekly',
@@ -18,7 +26,6 @@ const GROUPS: readonly Omit<Group, 'createdAt'>[] = [
     isActive: true,
   },
   {
-    id: 'grp-fete',
     name: 'Tontine cotisation fête',
     contributionAmount: 3000,
     frequency: 'monthly',
@@ -26,7 +33,6 @@ const GROUPS: readonly Omit<Group, 'createdAt'>[] = [
     isActive: true,
   },
   {
-    id: 'grp-voyage',
     name: 'Tontine voyage karth',
     contributionAmount: 9000,
     frequency: 'weekly',
@@ -63,7 +69,7 @@ function daysAgo(days: number, hour = 10): string {
 
 function makeMembers(groupId: string, names: readonly string[]): Member[] {
   return names.map((fullName, index) => ({
-    id: `${groupId}-m${index}`,
+    id: clientUuid(),
     groupId,
     fullName,
     phone: index % 3 === 0 ? `019000000${index}` : null,
@@ -91,7 +97,10 @@ function makeTransaction(
     rawTranscript: source === 'voice' ? null : null,
     confidence: null,
     clientUuid: clientUuid(),
-    syncStatus: 'synced',
+    // « en attente » et non « synchronisé » : cet historique doit remonter en
+    // base comme le reste, faute de quoi il disparaîtrait au premier
+    // changement d'appareil.
+    syncStatus: 'pending',
     createdAt: occurredAt,
   };
 }
@@ -132,19 +141,36 @@ export async function seedDemoData(): Promise<void> {
   if ((await db.groups.count()) > 0) return;
 
   const createdAt = daysAgo(WEEKS_OF_HISTORY * 7 + 5);
+  const groups: Group[] = GROUPS.map((group) => ({ ...group, id: clientUuid(), createdAt }));
   const members: Member[] = [];
   const transactions: Transaction[] = [];
 
-  for (const group of GROUPS) {
-    const names = group.id === 'grp-ayaba' ? AYABA_MEMBERS : OTHER_MEMBERS;
+  groups.forEach((group, index) => {
+    const names = index === 0 ? AYABA_MEMBERS : OTHER_MEMBERS;
     const groupMembers = makeMembers(group.id, names);
     members.push(...groupMembers);
     transactions.push(...makeHistory(group, groupMembers));
-  }
+  });
 
   await db.transaction('rw', db.groups, db.members, db.transactions, async () => {
-    await db.groups.bulkAdd(GROUPS.map((group) => ({ ...group, createdAt })));
+    await db.groups.bulkAdd(groups);
     await db.members.bulkAdd(members);
     await db.transactions.bulkAdd(transactions);
   });
+
+  await mettreEnFile(groups, members, transactions);
+}
+
+/**
+ * Fait remonter l'amorçage vers la base, dans l'ordre imposé par les clés
+ * étrangères : les caisses, puis les membres, puis les opérations.
+ */
+async function mettreEnFile(
+  groups: readonly Group[],
+  members: readonly Member[],
+  transactions: readonly Transaction[],
+): Promise<void> {
+  for (const group of groups) await enqueue('group', 'create', group.id, group);
+  for (const member of members) await enqueue('member', 'create', member.id, member);
+  for (const row of transactions) await enqueue('transaction', 'create', row.clientUuid, row);
 }

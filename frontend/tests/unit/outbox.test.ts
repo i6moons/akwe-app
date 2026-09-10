@@ -28,6 +28,43 @@ beforeEach(async () => {
   await Promise.all([db.transactions.clear(), db.outbox.clear()]);
 });
 
+describe('deux synchronisations qui se chevauchent', () => {
+  it('n’en exécute qu’une et laisse l’autre attendre le même résultat', async () => {
+    await createTransaction(draft(2000));
+
+    let appels = 0;
+    const envoi = async (entries: readonly { clientUuid: string }[]) => {
+      appels += 1;
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      return { confirmed: entries.map((entry) => entry.clientUuid) };
+    };
+
+    const [a, b] = await Promise.all([flushOutbox(envoi), flushOutbox(envoi)]);
+
+    expect(appels).toBe(1);
+    expect(a).toEqual(b);
+    expect(await pendingCount()).toBe(0);
+  });
+
+  it('ne perd pas une écriture laissée « en cours d’envoi » par un vidage interrompu', async () => {
+    await createTransaction(draft(3000));
+    const db = getDb();
+    const bloquee = await db.outbox.toCollection().first();
+    // État exact dans lequel une course laissait l'écriture : plus jamais
+    // comptée, donc plus jamais réessayée.
+    await db.outbox.update(bloquee!.id!, { status: 'sending' });
+
+    expect(await pendingCount()).toBe(1);
+
+    const { sent } = await flushOutbox(async (entries) => ({
+      confirmed: entries.map((entry) => entry.clientUuid),
+    }));
+
+    expect(sent).toBe(1);
+    expect(await pendingCount()).toBe(0);
+  });
+});
+
 describe('écriture hors ligne', () => {
   it('écrit dans IndexedDB et empile dans la file', async () => {
     await createTransaction(draft(2000));
