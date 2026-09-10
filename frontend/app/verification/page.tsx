@@ -46,51 +46,54 @@ export default function VerificationPage() {
   }
 
   return (
-    <main className="flex min-h-dvh flex-col px-6 pt-16 pb-8">
-      <Wordmark />
+    <main className="flex min-h-dvh flex-col px-6 pt-[max(2.5rem,env(safe-area-inset-top))]">
+      <Wordmark className="shrink-0 pt-6" />
 
-      <div className="pt-14 text-center">
-        <h1 className="font-display text-3xl font-bold text-white">Vérification</h1>
-        <p className="pt-2 text-white/80">
-          Un code a été envoyé au
-          <br />+ 229 {phone ? formatPhone(phone) : '…'}
-        </p>
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex flex-1 flex-col justify-center">
+          <div className="text-center">
+            <h1 className="font-display text-3xl font-bold text-white">Vérification</h1>
+            <p className="pt-2 text-white/80">
+              Un code a été envoyé au +229 {phone ? formatPhone(phone) : '…'}
+            </p>
+          </div>
+
+          <p className="pt-10 text-right text-sm text-white/80">
+            Expire dans{' '}
+            <span className="font-semibold text-white">
+              {minutes}:{seconds}
+            </span>
+          </p>
+
+          <div className="pt-3">
+            <OtpInput value={code} onChange={setCode} disabled={remaining === 0} />
+          </div>
+
+          <div className="flex flex-col items-center gap-3 pt-8">
+            <button
+              type="button"
+              onClick={() => setRemaining(EXPIRY_SECONDS)}
+              className="text-accent-500 min-h-touch font-semibold"
+            >
+              Renvoyez le code
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push(routes.connexion)}
+              className="min-h-touch flex items-center gap-2 text-white/90"
+            >
+              <ArrowLeft className="size-4" aria-hidden />
+              Modifier le numéro
+            </button>
+          </div>
+        </div>
+
+        <FixedAction className="border-transparent bg-transparent backdrop-blur-none">
+          <Button size="lg" onClick={handleSubmit} disabled={!complete}>
+            Suivant
+          </Button>
+        </FixedAction>
       </div>
-
-      <p className="pt-10 text-right text-sm text-white/80">
-        Expire dans{' '}
-        <span className="font-semibold text-white">
-          {minutes}:{seconds}
-        </span>
-      </p>
-
-      <div className="pt-3">
-        <OtpInput value={code} onChange={setCode} disabled={remaining === 0} />
-      </div>
-
-      <div className="flex flex-col items-center gap-3 pt-8">
-        <button
-          type="button"
-          onClick={() => setRemaining(EXPIRY_SECONDS)}
-          className="text-accent-500 min-h-touch font-semibold"
-        >
-          Renvoyez le code
-        </button>
-        <button
-          type="button"
-          onClick={() => router.push(routes.connexion)}
-          className="min-h-touch flex items-center gap-2 text-white/90"
-        >
-          <ArrowLeft className="size-4" aria-hidden />
-          Modifier le numéro
-        </button>
-      </div>
-
-      <FixedAction>
-        <Button size="lg" onClick={handleSubmit} disabled={!complete}>
-          Suivant
-        </Button>
-      </FixedAction>
     </main>
   );
 }
