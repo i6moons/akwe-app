@@ -26,6 +26,7 @@ const UNITS: Readonly<Record<string, number>> = {
   quinze: 15,
   seize: 16,
   vingt: 20,
+  vingts: 20,
   trente: 30,
   quarante: 40,
   cinquante: 50,
@@ -41,6 +42,8 @@ const MULTIPLIERS: Readonly<Record<string, number>> = {
   millions: 1_000_000,
 };
 
+const NUMBER_WORDS = new Set([...Object.keys(UNITS), ...Object.keys(MULTIPLIERS), 'et']);
+
 /** Retire les accents et la ponctuation pour comparer des mots dictés. */
 export function normalize(text: string): string {
   return text
@@ -52,37 +55,34 @@ export function normalize(text: string): string {
     .trim();
 }
 
+function fromDigits(raw: string, suffix?: string): number | null {
+  const base = Number.parseInt(raw.replace(/[\s.]/g, ''), 10);
+  if (!Number.isSafeInteger(base) || base <= 0) return null;
+  if (suffix === 'k' || suffix === 'mille') return base * 1000;
+  if (suffix?.startsWith('million')) return base * 1_000_000;
+  return base;
+}
+
 /**
- * Extrait le premier montant entier trouvé dans une phrase.
- * Retourne `null` plutôt que de deviner : un montant inventé est pire que pas de
- * montant du tout.
+ * « quatre-vingt » = 80, « soixante-dix » = 70.
+ * Les traits d'union de la dictée sont coupés avant de parcourir les mots.
  */
-export function parseFrenchAmount(sentence: string): number | null {
-  const text = normalize(sentence);
-
-  // Écriture chiffrée : « 2000 », « 2 000 f », « 10.000 », « 2k ».
-  const digitMatch = text.match(/(\d[\d\s.]*)\s*(k|mille|millions?)?/);
-  if (digitMatch?.[1] && /\d/.test(digitMatch[1])) {
-    const base = Number.parseInt(digitMatch[1].replace(/[\s.]/g, ''), 10);
-    if (Number.isSafeInteger(base) && base > 0) {
-      const suffix = digitMatch[2];
-      if (suffix === 'k' || suffix === 'mille') return base * 1000;
-      if (suffix?.startsWith('million')) return base * 1_000_000;
-      return base;
-    }
-  }
-
-  const words = text
-    .split(' ')
-    .filter((word) => word in UNITS || word in MULTIPLIERS || word === 'et');
-  if (words.length === 0) return null;
-
+function parseSpoken(tokens: readonly string[]): number | null {
   let total = 0;
   let current = 0;
   let seen = false;
 
-  for (const word of words) {
+  for (let index = 0; index < tokens.length; index += 1) {
+    const word = tokens[index]!;
     if (word === 'et') continue;
+
+    const next = tokens[index + 1];
+    if (word === 'quatre' && (next === 'vingt' || next === 'vingts')) {
+      current += 80;
+      seen = true;
+      index += 1;
+      continue;
+    }
 
     const multiplier = MULTIPLIERS[word];
     if (multiplier !== undefined) {
@@ -95,9 +95,42 @@ export function parseFrenchAmount(sentence: string): number | null {
     const unit = UNITS[word];
     if (unit === undefined) continue;
     seen = true;
-    current = unit === 100 && current > 0 ? current * 100 : current + unit;
+    current = unit === 100 ? (current === 0 ? 1 : current) * 100 : current + unit;
   }
 
   const value = total + current;
   return seen && value > 0 ? value : null;
+}
+
+/**
+ * Extrait le premier montant entier trouvé dans une phrase.
+ * Retourne `null` plutôt que de deviner : un montant inventé est pire que pas de
+ * montant du tout.
+ */
+export function parseFrenchAmount(sentence: string): number | null {
+  const text = normalize(sentence).replace(/-/g, ' ');
+
+  // Montant collé à une unité : « 10.000 F », « 2k », « 3 mille ».
+  const withUnit = [...text.matchAll(/(\d[\d\s.]*)\s*(k|mille|millions?|f(?:cfa)?|francs?)\b/g)];
+  if (withUnit.length > 0) {
+    const last = withUnit[withUnit.length - 1]!;
+    const amount = fromDigits(last[1] ?? '', last[2]);
+    if (amount !== null) return amount;
+  }
+
+  const words = text.split(' ').filter((word) => NUMBER_WORDS.has(word));
+  const spoken = parseSpoken(words);
+  if (spoken !== null) {
+    const hasCurrency = /\b(f|fcfa|francs?|cfa)\b/.test(text);
+    const hasScale = words.some(
+      (word) => word in MULTIPLIERS || word === 'cent' || word === 'cents',
+    );
+    if (spoken >= 100 || hasCurrency || hasScale) return spoken;
+  }
+
+  // Dernier nombre assez grand pour être un montant, pas un n° de membre.
+  const digits = [...text.matchAll(/(\d[\d\s.]*)/g)]
+    .map((match) => fromDigits(match[1] ?? ''))
+    .filter((value): value is number => value !== null && value >= 100);
+  return digits.at(-1) ?? null;
 }

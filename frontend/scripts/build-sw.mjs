@@ -8,7 +8,7 @@
  * le modèle.
  */
 import { createHash } from 'node:crypto';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, readdir, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
@@ -44,10 +44,29 @@ async function buildAssets() {
     .map((file) => `/_next/${file}`);
 }
 
+/**
+ * Polices `next/font` : elles vivent sous `.next/static/media/` et n'apparaissent
+ * pas toujours dans les manifestes de pages. Sans elles, le hors-ligne tombe
+ * sur la police système (`display: swap`).
+ */
+async function fontAssets() {
+  const dir = path.join(NEXT_DIR, 'static', 'media');
+  if (!existsSync(dir)) return [];
+  const names = await readdir(dir);
+  return names
+    .filter((name) => /\.(woff2?|ttf|otf)$/i.test(name))
+    .map((name) => `/_next/static/media/${name}`);
+}
+
 /** Fichiers de `public/` dont l'application a besoin hors connexion. */
 const PUBLIC_ASSETS = ['/manifest.webmanifest', '/image1.png'];
 
-const precache = [...(await staticPaths()), ...PUBLIC_ASSETS, ...(await buildAssets())];
+const precache = [
+  ...(await staticPaths()),
+  ...PUBLIC_ASSETS,
+  ...(await buildAssets()),
+  ...(await fontAssets()),
+];
 
 // Le nom du cache change dès qu'un fichier change : l'ancien cache est alors
 // supprimé à l'activation, et personne ne reste bloqué sur une vieille version.

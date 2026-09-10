@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { preparerCarnet } from '@/lib/db/preparer';
 import { MotionProvider } from '@/components/ui/motion';
 import { ToastProvider } from '@/components/ui/toast';
 import { AppShell } from '@/components/layout/app-shell';
+import { preparerCarnet } from '@/lib/db/preparer';
+import { registerServiceWorker } from '@/lib/pwa/register-sw';
 
 /**
  * Amorce l'application côté navigateur.
@@ -27,11 +28,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       if (!cancelled) console.error('AKWÈ : préparation du carnet impossible', error);
     });
 
-    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
-      navigator.serviceWorker.register('/sw.js').catch((error: unknown) => {
-        console.warn('AKWÈ : service worker non enregistré', error);
-      });
-    }
+    registerServiceWorker();
 
     return () => {
       cancelled = true;

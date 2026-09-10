@@ -23,9 +23,24 @@ describe('parseFrenchAmount', () => {
     expect(parseFrenchAmount('3 mille')).toBe(3000);
   });
 
+  it('comprend soixante-dix et quatre-vingt, y compris avec traits d’union', () => {
+    expect(parseFrenchAmount('soixante-dix mille francs')).toBe(70_000);
+    expect(parseFrenchAmount('soixante et onze mille')).toBe(71_000);
+    expect(parseFrenchAmount('quatre-vingt mille')).toBe(80_000);
+    expect(parseFrenchAmount('quatre-vingt-dix mille')).toBe(90_000);
+    expect(parseFrenchAmount('quatre-vingt-quinze mille')).toBe(95_000);
+    expect(parseFrenchAmount('vingt-cinq mille francs')).toBe(25_000);
+  });
+
+  it('prend le montant en francs, pas un chiffre parasite', () => {
+    expect(parseFrenchAmount('membre 3 a versé 2000 francs')).toBe(2000);
+    expect(parseFrenchAmount('le 10 Adjovi a donné 10.000 F')).toBe(10_000);
+  });
+
   it('ne devine jamais un montant absent', () => {
     expect(parseFrenchAmount('Adjovi a payé sa part')).toBeNull();
     expect(parseFrenchAmount('')).toBeNull();
+    expect(parseFrenchAmount('un membre a versé sa part')).toBeNull();
   });
 
   it('retourne un entier, jamais un flottant', () => {

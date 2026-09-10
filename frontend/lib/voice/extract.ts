@@ -11,10 +11,71 @@ import type { Member, OperationDraft, TransactionType } from '@/lib/types';
 const TYPE_KEYWORDS: readonly (readonly [TransactionType, readonly string[]])[] = [
   ['repayment', ['rembourse', 'remboursement', 'a rendu', 'rendu largent']],
   ['loan', ['pret', 'prete', 'emprunt', 'a emprunte']],
-  ['payout', ['versement', 'a recu', 'retrait', 'a retire', 'j ai donne a']],
+  ['payout', ['versement', 'a recu', 'retrait', 'a retire', 'j ai donne a', 'son tour']],
   ['fee', ['frais', 'amende', 'penalite', 'depense']],
   ['contribution', ['verse', 'cotise', 'cotisation', 'a donne', 'a paye', 'apporte']],
 ];
+
+/**
+ * Mots que Chrome pose souvent dans une dictée, et qui ne sont jamais un prénom.
+ * Sans ça, « mille » ou « pour » peuvent coller à un nom court par hasard.
+ */
+const STOPWORDS = new Set([
+  'les',
+  'des',
+  'une',
+  'pour',
+  'dans',
+  'avec',
+  'francs',
+  'franc',
+  'fcfa',
+  'cfa',
+  'cotisation',
+  'cotise',
+  'verse',
+  'donne',
+  'paye',
+  'aujourdhui',
+  'aujourd',
+  'hui',
+  'hier',
+  'avant',
+  'mille',
+  'milles',
+  'cents',
+  'cent',
+  'deux',
+  'trois',
+  'quatre',
+  'cinq',
+  'six',
+  'sept',
+  'huit',
+  'neuf',
+  'dix',
+  'onze',
+  'vingt',
+  'vingts',
+  'trente',
+  'membre',
+  'tontine',
+  'caisse',
+  'pret',
+  'emprunt',
+  'recu',
+  'retrait',
+  'tour',
+  'frais',
+  'amende',
+  'part',
+  'son',
+  'ses',
+  'elle',
+  'aussi',
+  'ainsi',
+  'merci',
+]);
 
 /** Distance de Levenshtein bornée, pour rapprocher Adjoavi/Adjovi, Kossi/Kossy. */
 export function editDistance(a: string, b: string): number {
@@ -37,31 +98,95 @@ export function editDistance(a: string, b: string): number {
   return previous[cols - 1] ?? Math.max(a.length, b.length);
 }
 
+function nameTokens(transcript: string): string[] {
+  const tokens = normalize(transcript).replace(/-/g, ' ').split(' ').filter(Boolean);
+
+  const glued: string[] = [];
+  for (let index = 0; index < tokens.length - 1; index += 1) {
+    const left = tokens[index]!;
+    const right = tokens[index + 1]!;
+    // Chrome coupe souvent « Adjovi » en « à jovi ». On recolle les syllabes courtes.
+    if (left.length <= 4 && right.length <= 6) glued.push(left + right);
+  }
+
+  return [...tokens, ...glued].filter((word) => word.length >= 3 && !STOPWORDS.has(word));
+}
+
+function toleranceFor(part: string): number {
+  // « aussi » est à 2 de « Kossi » : trop large pour un prénom de 5 lettres.
+  return part.length <= 5 ? 1 : 2;
+}
+
 /**
  * Rapproche un nom entendu du membre le plus proche de la caisse.
  * Les noms béninois s'écrivent de plusieurs façons : on compare prénom par
  * prénom et on tolère deux caractères d'écart.
  */
 export function matchMember(transcript: string, members: readonly Member[]): Member | null {
-  const words = normalize(transcript)
-    .split(' ')
-    .filter((word) => word.length >= 3);
+  const words = nameTokens(transcript);
   let best: { member: Member; distance: number } | null = null;
+  let tied = false;
 
   for (const member of members) {
     for (const part of normalize(member.fullName).split(' ')) {
       if (part.length < 3) continue;
       for (const word of words) {
         const distance = editDistance(part, word);
-        const tolerance = part.length <= 4 ? 1 : 2;
-        if (distance <= tolerance && (best === null || distance < best.distance)) {
+        if (distance > toleranceFor(part)) continue;
+
+        if (best === null || distance < best.distance) {
           best = { member, distance };
+          tied = false;
+        } else if (distance === best.distance && member.id !== best.member.id) {
+          tied = true;
         }
       }
     }
   }
 
+  if (tied) return null;
   return best?.member ?? null;
+}
+
+/**
+ * Chrome propose plusieurs lectures d'une même phrase. On garde celle qui
+ * contient un prénom de la caisse — « Kossi » plutôt que « aussi ».
+ */
+export function pickBestTranscript(
+  alternatives: readonly string[],
+  names: readonly string[],
+): string {
+  const nonempty = alternatives.map((item) => item.trim()).filter(Boolean);
+  if (nonempty.length === 0) return '';
+
+  const members: Member[] = names.map((fullName, index) => ({
+    id: `alt-${index}`,
+    groupId: '',
+    fullName,
+    phone: null,
+    joinedAt: '',
+    isActive: true,
+  }));
+
+  let winner = nonempty[0]!;
+  let winnerDistance = Number.POSITIVE_INFINITY;
+
+  for (const alternative of nonempty) {
+    const member = matchMember(alternative, members);
+    if (!member) continue;
+
+    const part = normalize(member.fullName).split(' ')[0] ?? '';
+    const distance = Math.min(
+      ...nameTokens(alternative).map((word) => editDistance(part, word)),
+      Number.POSITIVE_INFINITY,
+    );
+    if (distance < winnerDistance) {
+      winner = alternative;
+      winnerDistance = distance;
+    }
+  }
+
+  return winner;
 }
 
 export function detectType(transcript: string): TransactionType | null {

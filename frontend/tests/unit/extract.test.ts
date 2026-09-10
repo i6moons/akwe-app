@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectType, extractDraft, matchMember } from '@/lib/voice/extract';
+import { detectType, extractDraft, matchMember, pickBestTranscript } from '@/lib/voice/extract';
 import type { Member } from '@/lib/types';
 
 function member(id: string, fullName: string): Member {
@@ -33,6 +33,33 @@ describe('matchMember', () => {
 
   it('renvoie null plutôt que de choisir au hasard', () => {
     expect(matchMember('Quelqu un a versé', MEMBERS)).toBeNull();
+  });
+
+  it('ne prend pas un mot courant pour un prénom', () => {
+    expect(matchMember('mille francs pour la cotisation', MEMBERS)).toBeNull();
+  });
+
+  it('recolle les syllabes cassées par Chrome (« à jovi » → Adjovi)', () => {
+    expect(matchMember('a jovi a donné dix mille francs', MEMBERS)?.id).toBe('m1');
+  });
+
+  it('ne tranche pas quand deux membres portent le même prénom', () => {
+    const proches = [...MEMBERS, member('m4', 'Adjovi Hounkpatin')];
+    expect(matchMember('Adjovi a versé deux mille', proches)).toBeNull();
+  });
+});
+
+describe('pickBestTranscript', () => {
+  const names = MEMBERS.map((item) => item.fullName);
+
+  it('choisit l’hypothèse Web Speech qui contient un vrai prénom', () => {
+    expect(
+      pickBestTranscript(['aussi a versé deux mille', 'Kossi a versé deux mille'], names),
+    ).toBe('Kossi a versé deux mille');
+  });
+
+  it('garde la première hypothèse si aucune ne colle', () => {
+    expect(pickBestTranscript(['bonjour', 'merci'], names)).toBe('bonjour');
   });
 });
 
@@ -79,5 +106,17 @@ describe('extractDraft', () => {
   it('conserve la phrase dictée pour l’audit', () => {
     const phrase = 'Kossi a versé deux mille francs';
     expect(extractDraft(phrase, 'g1', MEMBERS, now).rawTranscript).toBe(phrase);
+  });
+
+  it('structure une dictée typique de Chrome, noms abîmés compris', () => {
+    const draft = extractDraft(
+      'a jovi a donné dix mille francs pour la cotisation',
+      'g1',
+      MEMBERS,
+      now,
+    );
+    expect(draft.memberId).toBe('m1');
+    expect(draft.amount).toBe(10_000);
+    expect(draft.type).toBe('contribution');
   });
 });

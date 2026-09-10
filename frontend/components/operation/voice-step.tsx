@@ -11,7 +11,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardPanel, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/states';
 import { useGroup, useMembers } from '@/lib/hooks/use-akwe';
-import { extractDraft } from '@/lib/voice/extract';
+import { extractDraft, pickBestTranscript } from '@/lib/voice/extract';
 import { useSpeech } from '@/lib/voice/use-speech';
 import type { OperationDraft } from '@/lib/types';
 import { routes } from '@/lib/routes';
@@ -29,8 +29,10 @@ export function VoiceStep({
   const [draft, setDraft] = useState<OperationDraft | null>(null);
 
   const handleFinal = useCallback(
-    (transcript: string) => {
-      setDraft(extractDraft(transcript, groupId, members ?? []));
+    (transcript: string, alternatives: string[] = []) => {
+      const names = (members ?? []).map((item) => item.fullName);
+      const heard = pickBestTranscript([transcript, ...alternatives], names);
+      setDraft(extractDraft(heard, groupId, members ?? []));
     },
     [groupId, members],
   );
@@ -58,7 +60,9 @@ export function VoiceStep({
               {listening ? 'Je vous écoute…' : 'Appuyez pour enregistrer'}
             </p>
             <p className="text-brand-700/80 text-xs">
-              Exemple : Adjovi a donné 10.000 francs pour la cotisation
+              {listening
+                ? 'Parlez, puis appuyez encore pour arrêter.'
+                : 'Exemple : Adjovi a donné 10.000 francs pour la cotisation'}
             </p>
           </div>
 

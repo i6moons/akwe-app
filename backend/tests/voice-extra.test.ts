@@ -24,4 +24,25 @@ describe('parseVoiceLocal — cas limites', () => {
     expect(parsed.type).toBe('contribution');
     expect(parsed.member_name).toBe('Kossi Agbodjan');
   });
+
+  it('ne classe pas une phrase vide de mot-clé comme cotisation', () => {
+    const parsed = parseVoiceLocal({
+      transcript: 'bonjour ça va',
+      group_id: 'g1',
+      member_names: ['Kossi Agbodjan'],
+      today: '2026-09-09',
+    });
+    expect(parsed.type).toBe('unknown');
+  });
+
+  it('comprend soixante-dix et quatre-vingt', () => {
+    const parsed = parseVoiceLocal({
+      transcript: 'Fatou a cotisé quatre-vingt-dix mille francs',
+      group_id: 'g1',
+      member_names: ['Fatou Diallo'],
+      today: '2026-09-09',
+    });
+    expect(parsed.amount).toBe(90_000);
+    expect(parsed.type).toBe('contribution');
+  });
 });
