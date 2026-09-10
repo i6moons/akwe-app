@@ -22,6 +22,10 @@ export const ROUTES_SANS_COQUILLE: readonly string[] = [
   routes.splash,
   routes.connexion,
   routes.verification,
+  // Dernière étape de l'inscription : la navigation y offrirait une porte de
+  // sortie vers l'accueil, et la trésorière arriverait dans son carnet sans
+  // s'être nommée.
+  routes.profil,
   '/offline',
 ];
 
