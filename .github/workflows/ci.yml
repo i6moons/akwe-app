@@ -127,6 +127,22 @@ jobs:
         env:
           PGPASSWORD: akwe
         run: |
+          # Postgres de CI n'a pas le schéma Auth de Supabase. Sans ce socle,
+          # `0002` échoue sur `auth.uid()` et `0003` sur `auth.users`.
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 <<'EOSQL'
+          create schema if not exists auth;
+          create table if not exists auth.users (
+            id uuid primary key,
+            phone text,
+            email text,
+            raw_user_meta_data jsonb not null default '{}'::jsonb
+          );
+          create or replace function auth.uid()
+          returns uuid
+          language sql
+          stable
+          as $$ select null::uuid $$;
+          EOSQL
           # Toutes les migrations, dans l'ordre. N'appliquer que `0001` laissait
           # `0002` à `0004` sans aucune validation : la base hébergée s'est ainsi
           # retrouvée sans les colonnes et la contrainte que le code attend.

@@ -43,11 +43,11 @@ puis **Login**.
 SQL Editor (rôle postgres), dans l'ordre, **une seule fois** :
 
 1. `supabase/migrations/0001_init.sql` — schéma
-2. `supabase/migrations/0002_rls.sql` — politiques (si `0001` ne les a pas déjà)
+2. `supabase/migrations/0002_rls.sql` — politiques RLS (rejouable : DROP IF EXISTS)
 3. `supabase/seed.sql` — Tontine Ayaba, solde attendu **174 000 F**
 
-Le projet hébergé a déjà reçu le schéma + le seed. Ne pas relancer `0002` si
-les politiques existent (« policy already exists »).
+Le projet hébergé a déjà reçu le schéma + le seed. Relancer `0002` est sans
+danger : les politiques existantes sont remplacées, pas dupliquées.
 
 Vérification après le seed :
 
